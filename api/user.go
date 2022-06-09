@@ -69,8 +69,8 @@ func (b *BaseApi) Login(ctx *gin.Context) {
 			response.FailWithMessage("用户名不存在或密码错误", ctx)
 		} else {
 			// 发放token
-			//b.tokenNext(ctx, *user)
-			response.OkWithDetailed(user, "成功", ctx)
+			b.tokenNext(ctx, *user)
+			//response.OkWithDetailed(user, "成功", ctx)
 		}
 	} else {
 		response.FailWithMessage("验证码错误", ctx)
@@ -78,5 +78,23 @@ func (b *BaseApi) Login(ctx *gin.Context) {
 }
 
 func (b *BaseApi) tokenNext(ctx *gin.Context, user model.User) {
+	j := &utils.JWT{SigningKey: []byte(global.CONFIG.JWT.SigningKey)}
+	claims := j.CreateClaims(Req.BaseClaims{
+		UUID:        user.UUID,
+		ID:          user.ID,
+		Username:    user.Username,
+		AuthorityId: user.AuthorityId,
+	})
+	token, err := j.CreateToken(claims)
+	if err != nil {
+		global.LOG.Error("获取token失败!", zap.Error(err))
+		response.FailWithMessage("获取token失败", ctx)
+		return
+	}
 
+	response.OkWithDetailed(Res.LoginResponse{
+		User:      user,
+		Token:     token,
+		ExpiresAt: claims.StandardClaims.ExpiresAt * 1000,
+	}, "登录成功", ctx)
 }

@@ -8,10 +8,10 @@ captcha:
   img-width: 240
   img-height: 80
 jwt:
-  signing-key: 'Bone'
+  signing-key: Qm9uZQ==
   expires-time: 604800
   buffer-time: 86400
-  issuer: 'Bone'
+  issuer: Bone
 
 mysql:
   path: 127.0.0.1
