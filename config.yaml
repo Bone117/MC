@@ -12,6 +12,8 @@ jwt:
   expires-time: 604800
   buffer-time: 86400
   issuer: Bone
+casbin:
+  model-path: './model/rbac_model.conf'
 
 mysql:
   path: 127.0.0.1

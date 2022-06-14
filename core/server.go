@@ -34,6 +34,12 @@ func RunServer() {
 	//system.LoadAll()
 	//}
 
+	// 设置casbin
+	initialize.SetupCasbin()
+
+	//初始化权限表
+	//initialize.InitializeAuthority()
+
 	Router := initialize.Routers()
 	//Router.Static("/form-generator", "./resource/page")
 

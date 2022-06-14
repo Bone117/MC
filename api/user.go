@@ -3,6 +3,7 @@ package api
 import (
 	"server/global"
 	"server/model"
+	"server/model/common/request"
 	"server/model/common/response"
 	Req "server/model/request"
 	Res "server/model/response"
@@ -18,8 +19,7 @@ import (
 
 var store = base64Captcha.DefaultMemStore
 
-type BaseApi struct {
-}
+type BaseApi struct{}
 
 func (b *BaseApi) Captcha(ctx *gin.Context) {
 	driver := base64Captcha.NewDriverDigit(global.CONFIG.Captcha.ImgHeight, global.CONFIG.Captcha.ImgWidth, global.CONFIG.Captcha.KeyLong, 0.7, 80)
@@ -43,7 +43,14 @@ func (b *BaseApi) Register(ctx *gin.Context) {
 		response.FailWithMessage(err.Error(), ctx)
 	}
 
-	user := &model.User{Username: r.Username, Password: r.Password, AuthorityId: r.AuthorityId}
+	var authorities []model.Authority
+	for _, v := range r.AuthorityIds {
+		authorities = append(authorities, model.Authority{
+			AuthorityId: v,
+		})
+	}
+
+	user := &model.User{Username: r.Username, NickName: r.NickName, Password: r.Password, Authorities: authorities}
 	userReturn, err := userService.Register(*user)
 	if err != nil {
 		global.LOG.Error("注册失败!", zap.Error(err))
@@ -64,13 +71,12 @@ func (b *BaseApi) Login(ctx *gin.Context) {
 	}
 	if store.Verify(l.CaptchaId, l.Captcha, true) {
 		u := &model.User{Username: l.Username, Password: l.Password}
-		if err, user := userService.Login(u); err != nil {
+		if user, err := userService.Login(u); err != nil {
 			global.LOG.Error("登录失败！用户名不存在或密码错误！", zap.Error(err))
 			response.FailWithMessage("用户名不存在或密码错误", ctx)
 		} else {
 			// 发放token
 			b.tokenNext(ctx, *user)
-			//response.OkWithDetailed(user, "成功", ctx)
 		}
 	} else {
 		response.FailWithMessage("验证码错误", ctx)
@@ -83,7 +89,7 @@ func (b *BaseApi) tokenNext(ctx *gin.Context, user model.User) {
 		UUID:        user.UUID,
 		ID:          user.ID,
 		Username:    user.Username,
-		AuthorityId: user.AuthorityId,
+		AuthorityId: user.Authorities[0].AuthorityId,
 	})
 	token, err := j.CreateToken(claims)
 	if err != nil {
@@ -97,4 +103,102 @@ func (b *BaseApi) tokenNext(ctx *gin.Context, user model.User) {
 		Token:     token,
 		ExpiresAt: claims.StandardClaims.ExpiresAt * 1000,
 	}, "登录成功", ctx)
+}
+
+func (b *BaseApi) ChangePassword(ctx *gin.Context) {
+	var user Req.ChangePasswordStruct
+	_ = ctx.ShouldBindJSON(&user)
+	if err := utils.Verify(user, utils.ChangePasswordVerify); err != nil {
+		response.FailWithMessage(err.Error(), ctx)
+		return
+	}
+	u := &model.User{Username: user.Username, Password: user.Password}
+	if _, err := userService.ChangePassword(u, user.NewPassword); err != nil {
+		global.LOG.Error("修改失败!", zap.Error(err))
+		response.FailWithMessage("修改失败,原密码错误!", ctx)
+	} else {
+		response.OkWithMessage("修改成功", ctx)
+	}
+}
+
+func (b *BaseApi) ResetPassword(ctx *gin.Context) {
+	var user model.User
+	_ = ctx.ShouldBindJSON(&user)
+	if err := userService.ResetPassword(user.ID); err != nil {
+		global.LOG.Error("重置失败!", zap.Error(err))
+		response.FailWithMessage("重置失败"+err.Error(), ctx)
+	} else {
+		response.OkWithMessage("重置成功", ctx)
+	}
+}
+
+//func (b *BaseApi) SetUserAuthority(ctx *gin.Context) {
+//	var sua Req.SetUserAuth
+//	_ = ctx.ShouldBindJSON(&sua)
+//	if UserVerifyErr := utils.Verify(sua, utils.SetUserAuthorityVerify); UserVerifyErr != nil {
+//		response.FailWithMessage(UserVerifyErr.Error(), ctx)
+//		return
+//	}
+//	userID := utils.GetUserID(ctx)
+//	uuid := utils.GetUserUuid(ctx)
+//	if err := userService.setUserAuthority(userID, uuid, sua.AuthorityId); err != nil {
+//		global.LOG.Error("修改失败", zap.Error(err))
+//		response.FailWithMessage(err.Error(), ctx)
+//	}
+//}
+
+func (b *BaseApi) SetUserInfo(ctx *gin.Context) {
+	var user Req.ChangeUserInfo
+	_ = ctx.ShouldBindJSON(&user)
+	if err := utils.Verify(user, utils.IdVerify); err != nil {
+		response.FailWithMessage(err.Error(), ctx)
+		return
+	}
+	if len(user.Authorities) != 0 {
+		err := userService.SetUserAuthorities(user.ID, user.AuthorityId)
+		if err != nil {
+			global.LOG.Error("设置失败!", zap.Error(err))
+			response.FailWithMessage("设置失败", ctx)
+		}
+	}
+}
+
+func (b *BaseApi) SetSelfInfo(ctx *gin.Context) {
+	var user Req.ChangeUserInfo
+	_ = ctx.BindJSON(&user)
+	user.ID = utils.GetUserID(ctx)
+	if err := userService.SetUserInfo(model.User{
+		MODEL: global.MODEL{
+			ID: user.ID,
+		},
+		NickName: user.NickName,
+		Phone:    user.Phone,
+		Email:    user.Email,
+	}); err != nil {
+		global.LOG.Error("设置失败!", zap.Error(err))
+		response.FailWithMessage("设置失败", ctx)
+	} else {
+		response.OkWithMessage("设置成功", ctx)
+	}
+}
+
+func (b *BaseApi) DeleteUser(ctx *gin.Context) {
+	var reqId request.GetById
+	_ = ctx.ShouldBindJSON(&reqId)
+	if err := utils.Verify(reqId, utils.IdVerify); err != nil {
+		response.FailWithMessage(err.Error(), ctx)
+		return
+	}
+	jwtId := utils.GetUserID(ctx)
+	if jwtId == uint(reqId.ID) {
+		response.FailWithMessage("删除失败，不能删除自己", ctx)
+		return
+	}
+	if err := userService.DeleteUser(reqId.ID); err != nil {
+		global.LOG.Error("删除失败!", zap.Error(err))
+		response.FailWithMessage("删除失败", ctx)
+	} else {
+		response.OkWithMessage("删除成功", ctx)
+	}
+
 }

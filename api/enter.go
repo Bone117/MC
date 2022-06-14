@@ -4,11 +4,12 @@ import "server/service"
 
 type ApiGroup struct {
 	BaseApi
-	//UserApi
+	AuthorityApi
 }
 
 var (
-	userService = service.ServiceGroupApp.UserService
+	userService      = service.ServiceGroupApp.UserService
+	authorityService = service.ServiceGroupApp.AuthorityService
 )
 
 var ApiGroupApp = new(ApiGroup)
