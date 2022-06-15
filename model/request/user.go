@@ -24,16 +24,12 @@ type ChangePasswordStruct struct {
 }
 
 type ChangeUserInfo struct {
-	ID          uint              `gorm:"primarykey"`
-	NickName    string            `json:"nickName" gorm:"default:系统用户;comment:用户昵称"` // 用户昵称
-	Phone       string            `json:"phone"  gorm:"comment:用户手机号"`               // 用户角色ID
-	AuthorityId []string          `json:"authorityId" gorm:"-"`                      // 角色ID
-	Email       string            `json:"email"  gorm:"comment:用户邮箱"`                // 用户邮箱
-	Authorities []model.Authority `json:"-" gorm:"many2many:user_authority;"`
-}
-
-type SetUserAuth struct {
-	AuthorityId string `json:"authorityId"` // 角色ID
+	ID           uint              `gorm:"primarykey"`
+	NickName     string            `json:"nickName" gorm:"default:系统用户;comment:用户昵称"` // 用户昵称
+	Phone        string            `json:"phone"  gorm:"comment:用户手机号"`               // 用户角色ID
+	AuthorityIds []string          `json:"authorityIds" gorm:"-"`                     // 角色ID
+	Email        string            `json:"email"  gorm:"comment:用户邮箱"`                // 用户邮箱
+	Authorities  []model.Authority `json:"-" gorm:"many2many:user_authority;"`
 }
 
 type SetUserAuthorities struct {

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"server/global"
 	"server/model"
 	"server/model/common/request"
@@ -132,20 +133,19 @@ func (b *BaseApi) ResetPassword(ctx *gin.Context) {
 	}
 }
 
-//func (b *BaseApi) SetUserAuthority(ctx *gin.Context) {
-//	var sua Req.SetUserAuth
-//	_ = ctx.ShouldBindJSON(&sua)
-//	if UserVerifyErr := utils.Verify(sua, utils.SetUserAuthorityVerify); UserVerifyErr != nil {
-//		response.FailWithMessage(UserVerifyErr.Error(), ctx)
-//		return
-//	}
-//	userID := utils.GetUserID(ctx)
-//	uuid := utils.GetUserUuid(ctx)
-//	if err := userService.setUserAuthority(userID, uuid, sua.AuthorityId); err != nil {
-//		global.LOG.Error("修改失败", zap.Error(err))
-//		response.FailWithMessage(err.Error(), ctx)
-//	}
-//}
+func (b *BaseApi) SetUserAuthority(ctx *gin.Context) {
+	var sua Req.SetUserAuthorities
+	_ = ctx.ShouldBindJSON(&sua)
+	if UserVerifyErr := utils.Verify(sua, utils.SetUserAuthorityVerify); UserVerifyErr != nil {
+		response.FailWithMessage(UserVerifyErr.Error(), ctx)
+		return
+	}
+	userID := utils.GetUserID(ctx)
+	if err := userService.SetUserAuthorities(userID, sua.AuthorityIds); err != nil {
+		global.LOG.Error("修改失败", zap.Error(err))
+		response.FailWithMessage(err.Error(), ctx)
+	}
+}
 
 func (b *BaseApi) SetUserInfo(ctx *gin.Context) {
 	var user Req.ChangeUserInfo
@@ -154,12 +154,26 @@ func (b *BaseApi) SetUserInfo(ctx *gin.Context) {
 		response.FailWithMessage(err.Error(), ctx)
 		return
 	}
-	if len(user.Authorities) != 0 {
-		err := userService.SetUserAuthorities(user.ID, user.AuthorityId)
+	if len(user.AuthorityIds) != 0 {
+		err := userService.SetUserAuthorities(user.ID, user.AuthorityIds)
 		if err != nil {
 			global.LOG.Error("设置失败!", zap.Error(err))
 			response.FailWithMessage("设置失败", ctx)
 		}
+	}
+
+	if err := userService.SetUserInfo(model.User{
+		MODEL: global.MODEL{
+			ID: user.ID,
+		},
+		NickName: user.NickName,
+		Phone:    user.Phone,
+		Email:    user.Email,
+	}); err != nil {
+		global.LOG.Error("设置失败!", zap.Error(err))
+		response.FailWithMessage("设置失败", ctx)
+	} else {
+		response.OkWithMessage("设置成功", ctx)
 	}
 }
 
@@ -201,4 +215,35 @@ func (b *BaseApi) DeleteUser(ctx *gin.Context) {
 		response.OkWithMessage("删除成功", ctx)
 	}
 
+}
+
+func (b *BaseApi) GetUserInfo(ctx *gin.Context) {
+	uuid := utils.GetUserUuid(ctx)
+	fmt.Println(uuid)
+	if ReqUser, err := userService.GetUserInfo(uuid); err != nil {
+		global.LOG.Error("获取失败!", zap.Error(err))
+		response.FailWithMessage("获取失败", ctx)
+	} else {
+		response.OkWithDetailed(gin.H{"userInfo": ReqUser}, "获取成功", ctx)
+	}
+}
+
+func (b *BaseApi) GetUserList(ctx *gin.Context) {
+	var pageInfo request.PageInfo
+	_ = ctx.ShouldBindJSON(&pageInfo)
+	if err := utils.Verify(pageInfo, utils.PageInfoVerify); err != nil {
+		response.FailWithMessage(err.Error(), ctx)
+		return
+	}
+	if list, total, err := userService.GetUserInfoList(pageInfo); err != nil {
+		global.LOG.Error("获取失败!", zap.Error(err))
+		response.FailWithMessage("获取失败", ctx)
+	} else {
+		response.OkWithDetailed(response.PageResult{
+			List:     list,
+			Total:    total,
+			Page:     pageInfo.Page,
+			PageSize: pageInfo.PageSize,
+		}, "获取成功", ctx)
+	}
 }

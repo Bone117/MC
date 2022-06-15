@@ -26,7 +26,8 @@ func Routers() *gin.Engine {
 	PrivateGroup := Router.Group("")
 	PrivateGroup.Use(middleware.JWTAuth()).Use(middleware.CasbinHandler())
 	{
-		systemRouter.InitUserRouter(PrivateGroup) // 注册用户路由
+		systemRouter.InitUserRouter(PrivateGroup)      // 注册用户路由
+		systemRouter.InitAuthorityRouter(PrivateGroup) // 注册用户路由
 
 	}
 

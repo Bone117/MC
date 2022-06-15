@@ -10,6 +10,7 @@ type ApiGroup struct {
 var (
 	userService      = service.ServiceGroupApp.UserService
 	authorityService = service.ServiceGroupApp.AuthorityService
+	casbinService    = service.ServiceGroupApp.CasbinService
 )
 
 var ApiGroupApp = new(ApiGroup)

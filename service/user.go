@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"server/global"
 	"server/model"
+	"server/model/common/request"
 	"server/utils"
 
 	uuid "github.com/satori/go.uuid"
@@ -33,7 +34,7 @@ func (userService *UserService) Login(u *model.User) (userInter *model.User, err
 	}
 
 	var user model.User
-	err = global.DB.Where("username = ?", u.Username).Preload("Authority").First(&user).Error
+	err = global.DB.Where("username = ?", u.Username).Preload("Authorities").First(&user).Error
 	if err == nil {
 		if ok := utils.BcryptCheck(u.Password, user.Password); !ok {
 			return nil, errors.New("密码错误")
@@ -79,16 +80,6 @@ func (userService *UserService) DeleteUser(id int) (err error) {
 	return err
 }
 
-// TODO 未完成
-func (userService *UserService) setUserAuthority(id uint, uuid uuid.UUID, authorityId string) (err error) {
-	assignErr := global.DB.Where("user_id = ? AND authority_authority_id = ?", id, authorityId).First(&model.UseAuthority{}).Error
-	if errors.Is(assignErr, gorm.ErrRecordNotFound) {
-		return errors.New("该用户无此角色")
-	}
-	err = global.DB.Where("uuid = ?", uuid).First(&model.User{}).Update("authority_id", authorityId).Error
-	return err
-}
-
 func (userService *UserService) SetUserAuthorities(id uint, authorityIds []string) (err error) {
 	return global.DB.Transaction(func(tx *gorm.DB) error {
 		TxErr := tx.Delete(&[]model.UseAuthority{}, "user_id = ?", id).Error
@@ -105,10 +96,25 @@ func (userService *UserService) SetUserAuthorities(id uint, authorityIds []strin
 		if TxErr != nil {
 			return TxErr
 		}
-		TxErr = tx.Where("id = ?", id).First(&model.User{}).Update("authority_id", authorityIds[0]).Error
-		if TxErr != nil {
-			return TxErr
-		}
 		return nil
 	})
+}
+
+func (userService UserService) GetUserInfo(uuid uuid.UUID) (user model.User, err error) {
+	var reqUser model.User
+	err = global.DB.Debug().Preload("Authorities").First(&reqUser, "uuid = ?", uuid).Error
+	return reqUser, err
+}
+
+func (userService *UserService) GetUserInfoList(pageInfo request.PageInfo) (list interface{}, total int64, err error) {
+	var userList []model.User
+	limit := pageInfo.PageSize
+	offset := pageInfo.PageSize * (pageInfo.Page - 1)
+	db := global.DB.Model(&model.User{})
+	err = db.Count(&total).Error
+	if err != nil {
+		return
+	}
+	err = db.Limit(limit).Offset(offset).Preload("Authorities").Find(&userList).Error
+	return userList, total, err
 }
