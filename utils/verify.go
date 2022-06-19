@@ -1,12 +1,15 @@
 package utils
 
 var (
-	LoginVerify            = Rules{"CaptchaId": {NotEmpty()}, "Captcha": {NotEmpty()}, "Username": {NotEmpty()}, "Password": {NotEmpty()}}
+	LoginVerify            = Rules{"captchaId": {NotEmpty()}, "captcha": {NotEmpty()}, "username": {NotEmpty()}, "password": {NotEmpty()}}
 	RegisterVerify         = Rules{"username": {NotEmpty()}, "password": {NotEmpty()}, "authorityId": {NotEmpty()}}
-	ChangePasswordVerify   = Rules{"Username": {NotEmpty()}, "Password": {NotEmpty()}, "NewPassword": {NotEmpty()}}
+	ChangePasswordVerify   = Rules{"username": {NotEmpty()}, "password": {NotEmpty()}, "newPassword": {NotEmpty()}}
 	IdVerify               = Rules{"ID": {NotEmpty()}}
-	AuthorityVerify        = Rules{"AuthorityId": {NotEmpty()}, "AuthorityName": {NotEmpty()}}
-	AuthorityIdVerify      = Rules{"AuthorityId": {NotEmpty()}}
-	SetUserAuthorityVerify = Rules{"AuthorityId": {NotEmpty()}}
-	PageInfoVerify         = Rules{"Page": {NotEmpty()}, "PageSize": {NotEmpty()}}
+	AuthorityVerify        = Rules{"authorityId": {NotEmpty()}, "authorityName": {NotEmpty()}}
+	AuthorityIdVerify      = Rules{"authorityId": {NotEmpty()}}
+	SetUserAuthorityVerify = Rules{"authorityId": {NotEmpty()}}
+
+	NoticeVerify = Rules{"title": {NotEmpty()}, "desc": {NotEmpty()}, "content": {NotEmpty()}}
+
+	PageInfoVerify = Rules{"page": {NotEmpty()}, "pageSize": {NotEmpty()}}
 )

@@ -14,5 +14,10 @@ func DefaultCasbin() []CasbinInfo {
 	return []CasbinInfo{
 		{Path: "/base/login", Method: "POST"},
 		{Path: "/user/changePassword", Method: "POST"},
+		{Path: "/user/resetPassword", Method: "POST"},
+		{Path: "/user/setSelfInfo", Method: "POST"},
+
+		{Path: "/notice/getNotice", Method: "GET"},
+		{Path: "/notice/getNoticeList", Method: "POST"},
 	}
 }

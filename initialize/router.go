@@ -22,13 +22,15 @@ func Routers() *gin.Engine {
 	PublicGroup := Router.Group("")
 	{
 		systemRouter.InitBaseRouter(PublicGroup)
+		systemRouter.InitNoticeRouter(PublicGroup)
 	}
 	PrivateGroup := Router.Group("")
 	PrivateGroup.Use(middleware.JWTAuth()).Use(middleware.CasbinHandler())
 	{
 		systemRouter.InitUserRouter(PrivateGroup)      // 注册用户路由
-		systemRouter.InitAuthorityRouter(PrivateGroup) // 注册用户路由
+		systemRouter.InitAuthorityRouter(PrivateGroup) // 注册角色路由
 
+		systemRouter.InitFileRouter(PrivateGroup) // 注册文件路由
 	}
 
 	global.LOG.Info("router register success")

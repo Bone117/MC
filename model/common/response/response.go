@@ -9,8 +9,8 @@ import (
 type PageResult struct {
 	List     interface{} `json:"list"`
 	Total    int64       `json:"total"`
-	Page     int         `json:"page"`
-	PageSize int         `json:"pageSize"`
+	Page     int         `json:"page"`     // 页码
+	PageSize int         `json:"pageSize"` // 每页大小
 }
 
 type Response struct {

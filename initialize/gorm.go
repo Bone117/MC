@@ -80,4 +80,11 @@ func RegisterTables(db *gorm.DB) {
 		}
 		global.LOG.Info("register User table success")
 	}
+	err := db.AutoMigrate(
+		model.Notice{},
+	)
+	if err != nil {
+		global.LOG.Error("register table failed", zap.Error(err))
+		os.Exit(0)
+	}
 }

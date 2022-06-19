@@ -3,6 +3,7 @@ package service
 type ServiceGroup struct {
 	UserService
 	AuthorityService
+	NoticeService
 	CasbinService
 }
 
