@@ -139,7 +139,7 @@ func SetupCasbin() {
 			}
 			if global.DB.Migrator().HasTable(&gormadapter.CasbinRule{}) {
 				if err := global.DB.Create(&entities).Error; err != nil {
-					global.LOG.Error("Casbin 表 数据初始化失败!")
+					global.LOG.Info("Casbin 表 数据初始化失败!")
 				} else {
 					global.LOG.Info("Casbin 表 数据初始化成功!")
 				}

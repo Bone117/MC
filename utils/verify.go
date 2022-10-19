@@ -11,5 +11,7 @@ var (
 
 	NoticeVerify = Rules{"title": {NotEmpty()}, "desc": {NotEmpty()}, "content": {NotEmpty()}}
 
+	SignVerify = Rules{"workName": {NotEmpty()}, "workFileTypeId": {NotEmpty()}, "workSoftware": {NotEmpty()}, "workDesc": {NotEmpty()}, "majorId": {NotEmpty()}, "gradeName": {NotEmpty()}}
+
 	PageInfoVerify = Rules{"page": {NotEmpty()}, "pageSize": {NotEmpty()}}
 )

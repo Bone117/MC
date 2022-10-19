@@ -5,6 +5,7 @@ type ServiceGroup struct {
 	AuthorityService
 	NoticeService
 	CasbinService
+	StageService
 }
 
 var ServiceGroupApp = new(ServiceGroup)

@@ -5,7 +5,7 @@ type RouterGroup struct {
 	UserRouter
 	AuthorityRouter
 	NoticeRouter
-	FileRouter
+	StageRouter
 }
 
 var RouterGroupApp = new(RouterGroup)

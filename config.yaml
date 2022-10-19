@@ -12,6 +12,9 @@ jwt:
   expires-time: 604800
   buffer-time: 86400
   issuer: Bone
+local:
+  path: uploads/file
+  store-path: uploads/file
 casbin:
   model-path: './model/rbac_model.conf'
 

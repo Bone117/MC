@@ -4,7 +4,7 @@ import "server/model"
 
 type Register struct {
 	Username string `json:"username"`
-	NickName string `json:"nickname" gorm:"default:'newUser'"`
+	NickName string `json:"nickName" gorm:"default:'newUser'"`
 	Password string `json:"password"`
 	//AuthorityId  string   `json:"authorityId"`
 	AuthorityIds []string `json:"authorityIds"`

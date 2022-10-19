@@ -12,9 +12,8 @@ type Server struct {
 	//AutoCode Autocode `mapstructure:"autocode" json:"autocode" yaml:"autocode"`
 	// gorm
 	Mysql Mysql `mapstructure:"mysql" json:"mysql" yaml:"mysql"`
-	// oss
-	//Local      Local      `mapstructure:"local" json:"local" yaml:"local"`
-	//TencentCOS TencentCOS `mapstructure:"tencent-cos" json:"tencent-cos" yaml:"tencent-cos"`
+	// file
+	Local Local `mapstructure:"local" json:"local" yaml:"local"`
 
 	//Excel Excel `mapstructure:"excel" json:"excel" yaml:"excel"`
 	//Timer Timer `mapstructure:"timer" json:"timer" yaml:"timer"`

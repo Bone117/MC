@@ -6,7 +6,7 @@ type ApiGroup struct {
 	BaseApi
 	AuthorityApi
 	NoticeApi
-	FileApi
+	StageApi
 }
 
 var (
@@ -14,6 +14,7 @@ var (
 	authorityService = service.ServiceGroupApp.AuthorityService
 	casbinService    = service.ServiceGroupApp.CasbinService
 	noticeService    = service.ServiceGroupApp.NoticeService
+	StageService     = service.ServiceGroupApp.StageService
 )
 
 var ApiGroupApp = new(ApiGroup)
