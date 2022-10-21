@@ -29,7 +29,8 @@ func (s *StageApi) Sign(ctx *gin.Context) {
 		return
 	}
 	sign := &model.Sign{
-		UserId:         utils.GetUserID(ctx),
+		//UserId:         utils.GetUserID(ctx),
+		UserId:         1,
 		WorkName:       signReq.WorkName,
 		WorkFileTypeId: signReq.WorkFileTypeId,
 		OtherAuthor:    signReq.OtherAuthor,
@@ -37,12 +38,34 @@ func (s *StageApi) Sign(ctx *gin.Context) {
 		WorkDesc:       signReq.WorkDesc,
 		JieCiId:        jieCiId,
 	}
-	if err := StageService.Sign(*sign); err != nil {
+	stu := &model.Student{
+		UserId: 1,
+		//UserId:    utils.GetUserID(ctx),
+		MajorId:   signReq.MajorId,
+		GradeName: signReq.GradeName,
+	}
+	if err := StageService.Sign(*sign, *stu); err != nil {
 		global.LOG.Error("报名失败!", zap.Error(err))
 		response.FailWithMessage("报名失败"+err.Error(), ctx)
 	} else {
 		response.OkWithMessage("报名成功", ctx)
 	}
+
+}
+
+func (s *StageApi) UpdateSign(ctx *gin.Context) {
+
+}
+
+func (s *StageApi) DeleteSign(ctx *gin.Context) {
+
+}
+
+func (s *StageApi) GetSign(ctx *gin.Context) {
+
+}
+
+func (s *StageApi) GetSignList(ctx *gin.Context) {
 
 }
 

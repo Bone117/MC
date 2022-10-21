@@ -92,7 +92,7 @@ func RegisterTables(db *gorm.DB) {
 		os.Exit(0)
 	}
 
-	// 参数时间
+	// 参赛时间
 	err = db.AutoMigrate(
 		model.CompetitionTime{},
 	)
@@ -121,12 +121,51 @@ func RegisterTables(db *gorm.DB) {
 		global.LOG.Info("initialize Stage table success")
 	}
 
-	// 届次
+	// 届次表
 	err = db.AutoMigrate(
 		model.Period{},
 	)
 	if err != nil {
 		global.LOG.Error("register Period table failed", zap.Error(err))
+		os.Exit(0)
+	}
+
+	// 专业表
+	if exist := global.DB.Migrator().HasTable(&model.Major{}); !exist {
+		err = db.AutoMigrate(
+			model.Major{},
+		)
+		if err != nil {
+			global.LOG.Error("register Major table failed", zap.Error(err))
+			os.Exit(0)
+		}
+		majorEntities := []model.Major{
+			{MajorName: "教育技术学"},
+			{MajorName: "小学教育"},
+			{MajorName: "现代教育技术"},
+			{MajorName: "应用心理学"},
+		}
+		if err = global.DB.Create(&majorEntities).Error; err != nil {
+			global.LOG.Error("initialize Major table failed", zap.Error(err))
+		}
+		global.LOG.Info("initialize Major table success")
+	}
+
+	// 班级表
+	err = db.AutoMigrate(
+		model.Grade{},
+	)
+	if err != nil {
+		global.LOG.Error("register Grade table failed", zap.Error(err))
+		os.Exit(0)
+	}
+
+	// 学生表
+	err = db.AutoMigrate(
+		model.Student{},
+	)
+	if err != nil {
+		global.LOG.Error("register Student table failed", zap.Error(err))
 		os.Exit(0)
 	}
 

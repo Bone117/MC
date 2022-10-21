@@ -14,6 +14,8 @@ type Server struct {
 	Mysql Mysql `mapstructure:"mysql" json:"mysql" yaml:"mysql"`
 	// file
 	Local Local `mapstructure:"local" json:"local" yaml:"local"`
+	// sign
+	Sign Sign `mapstructure:"sign" json:"sign" yaml:"sign"`
 
 	//Excel Excel `mapstructure:"excel" json:"excel" yaml:"excel"`
 	//Timer Timer `mapstructure:"timer" json:"timer" yaml:"timer"`
