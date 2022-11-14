@@ -24,7 +24,7 @@ func (s *StageApi) Sign(ctx *gin.Context) {
 		response.FailWithMessage(err.Error(), ctx)
 		return
 	}
-	jieCiId, err := StageService.GetJieCi()
+	jieCiId, err := stageService.GetJieCi()
 	if err != nil {
 		response.FailWithMessage(err.Error(), ctx)
 		return
@@ -45,7 +45,7 @@ func (s *StageApi) Sign(ctx *gin.Context) {
 		MajorId:   signReq.MajorId,
 		GradeName: signReq.GradeName,
 	}
-	if err := StageService.Sign(*sign, *stu); err != nil {
+	if err := stageService.Sign(*sign, *stu); err != nil {
 		global.LOG.Error("报名失败!", zap.Error(err))
 		response.FailWithMessage("报名失败"+err.Error(), ctx)
 	} else {
@@ -63,7 +63,7 @@ func (s *StageApi) UpdateSign(ctx *gin.Context) {
 	sign := &model.Sign{MODEL: global.MODEL{ID: signR.ID}, WorkName: signR.WorkName, WorkFileTypeId: signR.WorkFileTypeId,
 		OtherAuthor: signR.OtherAuthor, WorkAdviser: signR.WorkAdviser, WorkSoftware: signR.WorkSoftware,
 		WorkDesc: signR.WorkDesc}
-	if err := StageService.UpdateSign(*sign); err != nil {
+	if err := stageService.UpdateSign(*sign); err != nil {
 		global.LOG.Error("报名更新失败!", zap.Error(err))
 		response.FailWithMessage("报名更新失败", ctx)
 	} else {
@@ -74,7 +74,7 @@ func (s *StageApi) UpdateSign(ctx *gin.Context) {
 func (s *StageApi) DeleteSign(ctx *gin.Context) {
 	var reqId request.GetById
 	_ = ctx.ShouldBindJSON(&reqId)
-	if err := StageService.DeleteSign(reqId.ID); err != nil {
+	if err := stageService.DeleteSign(reqId.ID); err != nil {
 		global.LOG.Error("删除失败!", zap.Error(err))
 		response.FailWithMessage("删除失败", ctx)
 	} else {
@@ -85,7 +85,7 @@ func (s *StageApi) DeleteSign(ctx *gin.Context) {
 func (s *StageApi) GetSign(ctx *gin.Context) {
 	var reqId request.GetById
 	_ = ctx.ShouldBindJSON(&reqId)
-	if sign, err := StageService.GetSign(reqId.ID); err != nil {
+	if sign, err := stageService.GetSign(reqId.ID); err != nil {
 		global.LOG.Error("报名信息获取失败!", zap.Error(err))
 		response.FailWithDetailed(sign, "报名信息获取失败", ctx)
 	} else {
@@ -100,7 +100,7 @@ func (s *StageApi) GetSignList(ctx *gin.Context) {
 		response.FailWithMessage(err.Error(), ctx)
 		return
 	}
-	if list, total, err := StageService.GetSignList(pageInfo); err != nil {
+	if list, total, err := stageService.GetSignList(pageInfo); err != nil {
 		global.LOG.Error("获取报名列表失败!", zap.Error(err))
 		response.FailWithMessage("获取报名列表失败", ctx)
 	} else {
