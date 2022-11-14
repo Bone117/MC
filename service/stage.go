@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"server/global"
 	"server/model"
+	"server/model/common/request"
 	"strconv"
 	"time"
 )
@@ -37,6 +38,34 @@ func (s *StageService) Sign(sign model.Sign, mg model.Student) error {
 		return errors.New(errMsg)
 	}
 	return global.DB.Create(&sign).Error
+}
+
+func (s *StageService) DeleteSign(id int) error {
+	var sign model.Sign
+	return global.DB.Where("id=?", id).Delete(&sign).Error
+}
+
+func (s *StageService) UpdateSign(signR model.Sign) error {
+	return global.DB.Updates(&signR).Error
+}
+
+func (s *StageService) GetSign(signId int) (model.Sign, error) {
+	var sign model.Sign
+	err := global.DB.Where("id", signId).First(&sign).Error
+	return sign, err
+}
+
+func (s *StageService) GetSignList(pageInfo request.PageInfo) (list interface{}, total int64, err error) {
+	var signList []model.Sign
+	limit := pageInfo.PageSize
+	offset := pageInfo.PageSize * (pageInfo.Page - 1)
+	db := global.DB.Model(&model.Sign{})
+	err = db.Count(&total).Error
+	if err != nil {
+		return
+	}
+	err = db.Limit(limit).Offset(offset).Find(&signList).Error
+	return signList, total, err
 }
 
 func (s StageService) GetGrade(gradeName string) (uint, error) {

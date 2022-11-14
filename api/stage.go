@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"server/global"
 	"server/model"
+	"server/model/common/request"
 	"server/model/common/response"
 	Req "server/model/request"
 	Res "server/model/response"
@@ -54,19 +55,62 @@ func (s *StageApi) Sign(ctx *gin.Context) {
 }
 
 func (s *StageApi) UpdateSign(ctx *gin.Context) {
-
+	signR := model.Sign{}
+	_ = ctx.ShouldBindJSON(&signR)
+	if err := utils.Verify(signR, utils.IdVerify); err != nil {
+		response.FailWithMessage(err.Error(), ctx)
+	}
+	sign := &model.Sign{MODEL: global.MODEL{ID: signR.ID}, WorkName: signR.WorkName, WorkFileTypeId: signR.WorkFileTypeId,
+		OtherAuthor: signR.OtherAuthor, WorkAdviser: signR.WorkAdviser, WorkSoftware: signR.WorkSoftware,
+		WorkDesc: signR.WorkDesc}
+	if err := StageService.UpdateSign(*sign); err != nil {
+		global.LOG.Error("报名更新失败!", zap.Error(err))
+		response.FailWithMessage("报名更新失败", ctx)
+	} else {
+		response.OkWithMessage("报名更新成功", ctx)
+	}
 }
 
 func (s *StageApi) DeleteSign(ctx *gin.Context) {
-
+	var reqId request.GetById
+	_ = ctx.ShouldBindJSON(&reqId)
+	if err := StageService.DeleteSign(reqId.ID); err != nil {
+		global.LOG.Error("删除失败!", zap.Error(err))
+		response.FailWithMessage("删除失败", ctx)
+	} else {
+		response.OkWithMessage("删除成功", ctx)
+	}
 }
 
 func (s *StageApi) GetSign(ctx *gin.Context) {
-
+	var reqId request.GetById
+	_ = ctx.ShouldBindJSON(&reqId)
+	if sign, err := StageService.GetSign(reqId.ID); err != nil {
+		global.LOG.Error("报名信息获取失败!", zap.Error(err))
+		response.FailWithDetailed(sign, "报名信息获取失败", ctx)
+	} else {
+		response.OkWithDetailed(sign, "报名信息获取成功", ctx)
+	}
 }
 
 func (s *StageApi) GetSignList(ctx *gin.Context) {
-
+	var pageInfo request.PageInfo
+	_ = ctx.ShouldBindQuery(&pageInfo)
+	if err := utils.Verify(pageInfo, utils.PageInfoVerify); err != nil {
+		response.FailWithMessage(err.Error(), ctx)
+		return
+	}
+	if list, total, err := StageService.GetSignList(pageInfo); err != nil {
+		global.LOG.Error("获取报名列表失败!", zap.Error(err))
+		response.FailWithMessage("获取报名列表失败", ctx)
+	} else {
+		response.OkWithDetailed(response.PageResult{
+			List:     list,
+			Total:    total,
+			Page:     pageInfo.Page,
+			PageSize: pageInfo.PageSize,
+		}, "获取报名列表成功", ctx)
+	}
 }
 
 func (s *StageApi) UploadFile(ctx *gin.Context) {
