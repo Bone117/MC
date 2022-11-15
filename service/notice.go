@@ -19,7 +19,7 @@ func (n *NoticeService) DeleteNotice(noticeID uint) error {
 }
 
 func (n *NoticeService) UpdateNotice(notice model.Notice) error {
-	return global.DB.Debug().Updates(&notice).Error
+	return global.DB.Updates(&notice).Error
 }
 
 func (n *NoticeService) GetNotice(noticeId uint) (model.Notice, error) {
