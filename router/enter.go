@@ -6,6 +6,7 @@ type RouterGroup struct {
 	AuthorityRouter
 	NoticeRouter
 	StageRouter
+	PeriodRouter
 }
 
 var RouterGroupApp = new(RouterGroup)

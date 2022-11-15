@@ -29,6 +29,7 @@ func Routers() *gin.Engine {
 		systemRouter.InitUserRouter(PrivateGroup)      // 注册用户路由
 		systemRouter.InitAuthorityRouter(PrivateGroup) // 注册角色路由
 		systemRouter.InitStageRouter(PrivateGroup)     // 注册文件路由
+		systemRouter.InitPeriodRouter(PrivateGroup)    // 注册比赛届次路由
 	}
 
 	global.LOG.Info("router register success")

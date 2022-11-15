@@ -6,6 +6,7 @@ type ServiceGroup struct {
 	NoticeService
 	CasbinService
 	StageService
+	PeriodService
 }
 
 var ServiceGroupApp = new(ServiceGroup)
