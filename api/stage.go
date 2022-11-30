@@ -1,7 +1,6 @@
 package api
 
 import (
-	"fmt"
 	"server/global"
 	"server/model"
 	"server/model/common/request"
@@ -9,6 +8,7 @@ import (
 	Req "server/model/request"
 	Res "server/model/response"
 	"server/utils"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -113,9 +113,14 @@ func (s *StageApi) GetSignList(ctx *gin.Context) {
 	}
 }
 
+// UploadFile
+// @Tags     stage
+// @Summary  上传文件
+// @Produce   multipart/form-data
+// @Param    data  body      systemReq.Register                                            true  "用户名, 昵称, 密码, 角色ID"
+// @Success  200   {object}  response.Response{data=systemRes.SysUserResponse,msg=string}  "用户注册账号,返回包括用户信息"
+// @Router   /stage/upload [post]
 func (s *StageApi) UploadFile(ctx *gin.Context) {
-	//var file model.File
-	//form, err := ctx.MultipartForm()
 	_, header, err := ctx.Request.FormFile("file")
 	if err != nil {
 		global.LOG.Error("接收文件失败!", zap.Error(err))
@@ -124,26 +129,37 @@ func (s *StageApi) UploadFile(ctx *gin.Context) {
 	}
 
 	userid := utils.GetUserID(ctx)
-	filePath, key, uploadErr := utils.UploadFile(header, userid) // 文件上传后拿到文件路径
+	filePath, uploadErr := utils.UploadFile(header, userid) // 文件上传后拿到文件路径
 	if uploadErr != nil {
 		panic(err)
 	}
-	fmt.Println(key)
+	fileTypeID, _ := strconv.Atoi(ctx.PostForm("fileTypeID"))
 	f1 := model.File{
-		Url:      filePath,
-		FileName: header.Filename,
+		UserId:     utils.GetUserID(ctx),
+		Url:        filePath,
+		FileName:   header.Filename,
+		FileTypeID: uint(fileTypeID),
 	}
-	fmt.Println(f1)
+	if err = stageService.Upload(f1); err != nil {
+		response.FailWithMessage("上传失败", ctx)
+		return
+	}
+	response.OkWithMessage("上传成功", ctx)
+}
 
-	//files := form.File["files"]
-	//for _, postFile := range files {
-	//dst := path.Join("./", postFile.Filename)
-	//err := ctx.SaveUploadedFile(postFile, dst)
-	//if err != nil {
-	//	global.LOG.Error("文件写入错误!", zap.Error(err))
-	//	response.OkWithDetailed(Res.ExaFileResponse{File: file}, "上传失败", ctx)
-	//	return
-	//}
-
-	response.OkWithDetailed(Res.ExaFileResponse{File: f1}, "上传成功", ctx)
+// GetFile
+// @Tags     stage
+// @Summary  获取文件
+// @Param    data  param      Req.GetFileRequest                          true  "文件ID"
+// @Success  200   {object}  response.Response{data=file.File,msg=string}  "返回文件信息"
+// @Router   /stage/getFile [get]
+func (s *StageApi) GetFile(ctx *gin.Context) {
+	fileR := Req.GetFileRequest{}
+	_ = ctx.ShouldBindQuery(&fileR)
+	if file, err := stageService.GetFile(fileR.FileId); err != nil {
+		global.LOG.Error("文件信息获取失败!", zap.Error(err))
+		response.FailWithDetailed(file, "文件信息获取失败", ctx)
+	} else {
+		response.OkWithDetailed(Res.ExaFileResponse{File: file}, "文件信息获取成功", ctx)
+	}
 }

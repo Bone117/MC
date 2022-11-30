@@ -85,3 +85,9 @@ func (s *StageService) GetJieCi() (uint, error) {
 func (s *StageService) Upload(file model.File) error {
 	return global.DB.Create(&file).Error
 }
+
+func (s *StageService) GetFile(fileId uint) (model.File, error) {
+	var file model.File
+	err := global.DB.Where("id", fileId).First(&file).Error
+	return file, err
+}

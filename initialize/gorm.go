@@ -224,4 +224,12 @@ func RegisterTables(db *gorm.DB) {
 		global.LOG.Info("initialize FileType table success")
 	}
 
+	// 文件表初始化
+	err = db.AutoMigrate(
+		model.File{},
+	)
+	if err != nil {
+		global.LOG.Error("register File table failed", zap.Error(err))
+		os.Exit(0)
+	}
 }

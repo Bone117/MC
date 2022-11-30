@@ -19,6 +19,8 @@ func (s *StageRouter) InitStageRouter(Router *gin.RouterGroup) {
 		stageRouter.POST("getSign", stageApi.GetSign)
 		stageRouter.POST("getSignList", stageApi.GetSignList)
 
-		//fileRouter.POST("upload", fileApi.UploadFile)
+		stageRouter.POST("upload", stageApi.UploadFile)
+		stageRouter.GET("getFile", stageApi.GetFile)
+		//stageRouter.GET("getVideoList", stageApi.GetVideoList)
 	}
 }
