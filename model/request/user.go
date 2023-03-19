@@ -6,15 +6,16 @@ type Register struct {
 	Username string `json:"username"`
 	NickName string `json:"nickName" gorm:"default:'newUser'"`
 	Password string `json:"password"`
+	Phone    string `json:"phone"`
 	//AuthorityId  string   `json:"authorityId"`
 	AuthorityIds []string `json:"authorityIds"`
 }
 
 type Login struct {
-	Username  string `json:"username"`
-	Password  string `json:"password"`
-	Captcha   string `json:"captcha"`
-	CaptchaId string `json:"captchaId"` // 验证码ID
+	Username string `json:"username"`
+	Password string `json:"password"`
+	//Captcha   string `json:"captcha"`
+	//CaptchaId string `json:"captchaId"` // 验证码ID
 }
 
 type ChangePasswordStruct struct {

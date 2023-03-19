@@ -7,7 +7,6 @@ import (
 	"os"
 	"path"
 	"server/global"
-	"server/model"
 	"strconv"
 	"strings"
 	"time"
@@ -15,7 +14,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func UploadFile(file *multipart.FileHeader, userid uint) (string, error) {
+func UploadFile(file *multipart.FileHeader, userid uint, jieCi uint) (string, error) {
 	// 读取文件后缀
 	ext := path.Ext(file.Filename)
 	// 读取文件名并加密
@@ -24,10 +23,8 @@ func UploadFile(file *multipart.FileHeader, userid uint) (string, error) {
 	// 拼接新文件名
 	filename := name + "_" + time.Now().Format("20060102150405") + ext
 	// 创建路径
-	period := model.Period{} // 获取届次
-	global.DB.Last(&period)
 
-	storePath := path.Join(global.CONFIG.Local.StorePath, period.JieCi, strconv.Itoa(int(userid)))
+	storePath := path.Join(global.CONFIG.Local.StorePath, strconv.Itoa(int(jieCi)), strconv.Itoa(int(userid)))
 	mkdirErr := os.MkdirAll(storePath, os.ModePerm)
 	if mkdirErr != nil {
 		global.LOG.Error("function os.MkdirAll() Filed", zap.Any("err", mkdirErr.Error()))
@@ -58,4 +55,16 @@ func UploadFile(file *multipart.FileHeader, userid uint) (string, error) {
 		return "", errors.New("function io.Copy() Filed, err:" + copyErr.Error())
 	}
 	return filepath, nil
+}
+
+func DeleteFile(key string) error {
+	//p := global.CONFIG.Local.StorePath + "/" + key
+	//uploads/file/2/31/63f082743060b88e183d8da6e73d56c9_20230317010046.mp4
+	//uploads/file/uploads/file/2/31/63f082743060b88e183d8da6e73d56c9_20230317010046.mp4
+	if strings.Contains(key, global.CONFIG.Local.StorePath) {
+		if err := os.Remove(key); err != nil {
+			return errors.New("本地文件删除失败, err:" + err.Error())
+		}
+	}
+	return nil
 }

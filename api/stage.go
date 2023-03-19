@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"server/global"
 	"server/model"
 	"server/model/common/request"
@@ -9,6 +10,9 @@ import (
 	Res "server/model/response"
 	"server/utils"
 	"strconv"
+	"time"
+
+	"gorm.io/gorm"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -30,22 +34,21 @@ func (s *StageApi) Sign(ctx *gin.Context) {
 		return
 	}
 	sign := &model.Sign{
-		//UserId:         utils.GetUserID(ctx),
-		UserId:         1,
+		UserId:         utils.GetUserID(ctx),
 		WorkName:       signReq.WorkName,
 		WorkFileTypeId: signReq.WorkFileTypeId,
+		WorkSoftware:   signReq.WorkSoftware,
 		OtherAuthor:    signReq.OtherAuthor,
 		WorkAdviser:    signReq.WorkAdviser,
 		WorkDesc:       signReq.WorkDesc,
 		JieCiId:        jieCiId,
 	}
-	stu := &model.Student{
-		UserId: 1,
-		//UserId:    utils.GetUserID(ctx),
+	gra := &model.Grade{
+		UserId:    utils.GetUserID(ctx),
 		MajorId:   signReq.MajorId,
 		GradeName: signReq.GradeName,
 	}
-	if err := stageService.Sign(*sign, *stu); err != nil {
+	if err := stageService.Sign(*sign, *gra); err != nil {
 		global.LOG.Error("报名失败!", zap.Error(err))
 		response.FailWithMessage("报名失败"+err.Error(), ctx)
 	} else {
@@ -62,7 +65,7 @@ func (s *StageApi) UpdateSign(ctx *gin.Context) {
 	}
 	sign := &model.Sign{MODEL: global.MODEL{ID: signR.ID}, WorkName: signR.WorkName, WorkFileTypeId: signR.WorkFileTypeId,
 		OtherAuthor: signR.OtherAuthor, WorkAdviser: signR.WorkAdviser, WorkSoftware: signR.WorkSoftware,
-		WorkDesc: signR.WorkDesc}
+		WorkDesc: signR.WorkDesc, Status: signR.Status, RejReason: signR.RejReason}
 	if err := stageService.UpdateSign(*sign); err != nil {
 		global.LOG.Error("报名更新失败!", zap.Error(err))
 		response.FailWithMessage("报名更新失败", ctx)
@@ -95,7 +98,7 @@ func (s *StageApi) GetSign(ctx *gin.Context) {
 
 func (s *StageApi) GetSignList(ctx *gin.Context) {
 	var pageInfo request.PageInfo
-	_ = ctx.ShouldBindQuery(&pageInfo)
+	_ = ctx.ShouldBindJSON(&pageInfo)
 	if err := utils.Verify(pageInfo, utils.PageInfoVerify); err != nil {
 		response.FailWithMessage(err.Error(), ctx)
 		return
@@ -113,6 +116,20 @@ func (s *StageApi) GetSignList(ctx *gin.Context) {
 	}
 }
 
+func (s *StageApi) GetStage(ctx *gin.Context) {
+	var currentTime request.GetStage
+	//_ = ctx.ShouldBindQuery(&currentTime)
+	_ = ctx.ShouldBindJSON(&currentTime)
+	currentT, _ := time.ParseInLocation("2006-01-02 15:04:05", currentTime.CurrentTime, time.Local)
+	//println(currentT)
+	if stage, err := stageService.GetStage(currentT); err != nil {
+		global.LOG.Error("比赛时间获取失败!", zap.Error(err))
+		response.FailWithDetailed(stage, "当前暂无比赛", ctx)
+	} else {
+		response.OkWithDetailed(stage, "比赛时间获取成功", ctx)
+	}
+}
+
 // UploadFile
 // @Tags     stage
 // @Summary  上传文件
@@ -127,24 +144,43 @@ func (s *StageApi) UploadFile(ctx *gin.Context) {
 		response.FailWithMessage("接收文件失败", ctx)
 		return
 	}
+	fileTypeID, _ := strconv.Atoi(ctx.PostForm("fileTypeID"))
+	signID, _ := strconv.Atoi(ctx.PostForm("signId"))
+
+	keyWords := map[string]interface{}{
+		"FileTypeID": uint(fileTypeID),
+		"SignId":     uint(signID),
+	}
+	file, err := stageService.GetFile(keyWords)
+	if !errors.Is(err, gorm.ErrRecordNotFound) {
+		response.FailWithDetailed(file, "文件已存在", ctx)
+		return
+	}
 
 	userid := utils.GetUserID(ctx)
-	filePath, uploadErr := utils.UploadFile(header, userid) // 文件上传后拿到文件路径
+	jieCiId, err := stageService.GetJieCi()
+	if err != nil {
+		response.FailWithMessage(err.Error(), ctx)
+		return
+	}
+	filePath, uploadErr := utils.UploadFile(header, userid, jieCiId) // 文件上传后拿到文件路径
 	if uploadErr != nil {
 		panic(err)
 	}
-	fileTypeID, _ := strconv.Atoi(ctx.PostForm("fileTypeID"))
+
 	f1 := model.File{
 		UserId:     utils.GetUserID(ctx),
 		Url:        filePath,
 		FileName:   header.Filename,
 		FileTypeID: uint(fileTypeID),
+		SignId:     uint(signID),
 	}
-	if err = stageService.Upload(f1); err != nil {
+	if file, err := stageService.Upload(f1); err != nil {
 		response.FailWithMessage("上传失败", ctx)
 		return
+	} else {
+		response.OkWithDetailed(file, "上传成功", ctx)
 	}
-	response.OkWithMessage("上传成功", ctx)
 }
 
 // GetFile
@@ -156,10 +192,28 @@ func (s *StageApi) UploadFile(ctx *gin.Context) {
 func (s *StageApi) GetFile(ctx *gin.Context) {
 	fileR := Req.GetFileRequest{}
 	_ = ctx.ShouldBindQuery(&fileR)
-	if file, err := stageService.GetFile(fileR.FileId); err != nil {
+	keyWords := map[string]interface{}{
+		"id": fileR.FileId,
+	}
+	if file, err := stageService.GetFile(keyWords); err != nil {
 		global.LOG.Error("文件信息获取失败!", zap.Error(err))
 		response.FailWithDetailed(file, "文件信息获取失败", ctx)
 	} else {
 		response.OkWithDetailed(Res.ExaFileResponse{File: file}, "文件信息获取成功", ctx)
 	}
+}
+
+func (s *StageApi) DeleteFile(ctx *gin.Context) {
+	fileR := Req.GetFileRequest{}
+	err := ctx.ShouldBindJSON(&fileR)
+	if err != nil {
+		response.FailWithMessage(err.Error(), ctx)
+		return
+	}
+	if err := stageService.DeleteFile(fileR.FileId); err != nil {
+		global.LOG.Error("删除失败!", zap.Error(err))
+		response.FailWithMessage("删除失败", ctx)
+		return
+	}
+	response.OkWithMessage("删除成功", ctx)
 }

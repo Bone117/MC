@@ -1,7 +1,7 @@
 package utils
 
 var (
-	LoginVerify            = Rules{"captchaId": {NotEmpty()}, "captcha": {NotEmpty()}, "username": {NotEmpty()}, "password": {NotEmpty()}}
+	LoginVerify            = Rules{"username": {NotEmpty()}, "password": {NotEmpty()}}
 	RegisterVerify         = Rules{"username": {NotEmpty()}, "password": {NotEmpty()}, "authorityId": {NotEmpty()}}
 	ChangePasswordVerify   = Rules{"username": {NotEmpty()}, "password": {NotEmpty()}, "newPassword": {NotEmpty()}}
 	IdVerify               = Rules{"ID": {NotEmpty()}}

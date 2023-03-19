@@ -1,6 +1,7 @@
 package request
 
 type SignRequest struct {
+	JieCiId        uint   `json:"jieCiId"`
 	WorkName       string `json:"workName"`              // 作品名称
 	WorkFileTypeId uint   `json:"workFileTypeId"`        // 作品类型
 	OtherAuthor    string `json:"otherAuthor,omitempty"` // 其他作者

@@ -122,13 +122,13 @@ func RegisterTables(db *gorm.DB) {
 	}
 
 	// 届次表
-	err = db.AutoMigrate(
-		model.Period{},
-	)
-	if err != nil {
-		global.LOG.Error("register Period table failed", zap.Error(err))
-		os.Exit(0)
-	}
+	//err = db.AutoMigrate(
+	//	model.Period{},
+	//)
+	//if err != nil {
+	//	global.LOG.Error("register Period table failed", zap.Error(err))
+	//	os.Exit(0)
+	//}
 
 	// 专业表
 	if exist := global.DB.Migrator().HasTable(&model.Major{}); !exist {
@@ -230,6 +230,15 @@ func RegisterTables(db *gorm.DB) {
 	)
 	if err != nil {
 		global.LOG.Error("register File table failed", zap.Error(err))
+		os.Exit(0)
+	}
+
+	// 审核表初始化
+	err = db.AutoMigrate(
+		model.ReviewSign{},
+	)
+	if err != nil {
+		global.LOG.Error("register review table failed", zap.Error(err))
 		os.Exit(0)
 	}
 }

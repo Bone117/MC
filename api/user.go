@@ -45,42 +45,59 @@ func (b *BaseApi) Register(ctx *gin.Context) {
 	}
 
 	var authorities []model.Authority
-	for _, v := range r.AuthorityIds {
+	if len(r.AuthorityIds) == 0 {
 		authorities = append(authorities, model.Authority{
-			AuthorityId: v,
+			AuthorityId: "444",
 		})
+	} else {
+		for _, v := range r.AuthorityIds {
+			authorities = append(authorities, model.Authority{
+				AuthorityId: v,
+			})
+		}
 	}
 
-	user := &model.User{Username: r.Username, NickName: r.NickName, Password: r.Password, Authorities: authorities}
+	user := &model.User{Username: r.Username, NickName: r.NickName, Password: r.Password, Phone: r.Phone, Authorities: authorities}
 	userReturn, err := userService.Register(*user)
 	if err != nil {
 		global.LOG.Error("注册失败!", zap.Error(err))
 		response.FailWithDetailed(Res.UserResponse{User: userReturn}, "注册失败", ctx)
 	} else {
 		response.OkWithDetailed(Res.UserResponse{User: userReturn}, "注册成功", ctx)
+		//b.tokenNext(ctx, *user)
 	}
+}
+
+func (b *BaseApi) File(ctx *gin.Context) {
+	filePath := ctx.Param("file_path")
+	ctx.File("./uploads/file/" + filePath)
+	//user := &model.User{Username: r.Username, NickName: r.NickName, Password: r.Password, Phone: r.Phone, Authorities: authorities}
+	//userReturn, err := userService.Register(*user)
+	//if err != nil {
+	//	global.LOG.Error("注册失败!", zap.Error(err))
+	//	response.FailWithDetailed(Res.UserResponse{User: userReturn}, "注册失败", ctx)
+	//} else {
+	//	response.OkWithDetailed(Res.UserResponse{User: userReturn}, "注册成功", ctx)
+	//	//b.tokenNext(ctx, *user)
+	//}
 }
 
 func (b *BaseApi) Login(ctx *gin.Context) {
 	// 获取参数
 	var l Req.Login
 	_ = ctx.ShouldBindJSON(&l)
-	// 数据验证
-	if err := utils.Verify(l, utils.LoginVerify); err != nil {
-		response.FailWithMessage(err.Error(), ctx)
-		return
-	}
-	if store.Verify(l.CaptchaId, l.Captcha, true) {
-		u := &model.User{Username: l.Username, Password: l.Password}
-		if user, err := userService.Login(u); err != nil {
-			global.LOG.Error("登录失败！用户名不存在或密码错误！", zap.Error(err))
-			response.FailWithMessage("用户名不存在或密码错误", ctx)
-		} else {
-			// 发放token
-			b.tokenNext(ctx, *user)
-		}
+	//// 数据验证
+	//if err := utils.Verify(l, utils.LoginVerify); err != nil {
+	//	response.FailWithMessage(err.Error(), ctx)
+	//	return
+	//}
+	u := &model.User{Username: l.Username, Password: l.Password}
+	if user, err := userService.Login(u); err != nil {
+		global.LOG.Error("登录失败！用户名不存在或密码错误！", zap.Error(err))
+		response.FailWithMessage("用户名不存在或密码错误", ctx)
 	} else {
-		response.FailWithMessage("验证码错误", ctx)
+		// 发放token
+		b.tokenNext(ctx, *user)
 	}
 }
 
@@ -235,7 +252,15 @@ func (b *BaseApi) GetUserList(ctx *gin.Context) {
 		response.FailWithMessage(err.Error(), ctx)
 		return
 	}
-	if list, total, err := userService.GetUserInfoList(pageInfo); err != nil {
+	var list interface{}
+	var total int64
+	var err error
+	if _, ok := pageInfo.Keyword["authorityId"]; ok {
+		list, total, err = userService.GetUserListByAuthorityID(pageInfo)
+	} else {
+		list, total, err = userService.GetUserInfoList(pageInfo)
+	}
+	if err != nil {
 		global.LOG.Error("获取失败!", zap.Error(err))
 		response.FailWithMessage("获取失败", ctx)
 	} else {

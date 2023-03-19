@@ -2,6 +2,7 @@ package core
 
 import (
 	"fmt"
+	"net/http"
 	"server/global"
 	"server/initialize"
 	"time"
@@ -39,6 +40,7 @@ func RunServer() {
 
 	Router := initialize.Routers()
 	//Router.Static("/form-generator", "./resource/page")
+	Router.StaticFS(global.CONFIG.Local.Path, http.Dir(global.CONFIG.Local.StorePath))
 
 	address := fmt.Sprintf(":%d", global.CONFIG.System.Addr)
 	s := initServer(address, Router)

@@ -2,6 +2,7 @@ package initialize
 
 import (
 	"server/global"
+	"server/middleware"
 	"server/router"
 
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -24,12 +25,13 @@ func Routers() *gin.Engine {
 		systemRouter.InitNoticeRouter(PublicGroup)
 	}
 	PrivateGroup := Router.Group("")
-	//PrivateGroup.Use(middleware.JWTAuth()).Use(middleware.CasbinHandler())
+	PrivateGroup.Use(middleware.JWTAuth()).Use(middleware.CasbinHandler())
 	{
 		systemRouter.InitUserRouter(PrivateGroup)      // 注册用户路由
 		systemRouter.InitAuthorityRouter(PrivateGroup) // 注册角色路由
 		systemRouter.InitStageRouter(PrivateGroup)     // 注册文件路由
 		systemRouter.InitPeriodRouter(PrivateGroup)    // 注册比赛届次路由
+		systemRouter.InitReviewRouter(PrivateGroup)    // 注册审核路由
 	}
 
 	global.LOG.Info("router register success")

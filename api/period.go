@@ -14,15 +14,15 @@ type PeriodApi struct {
 }
 
 func (s *PeriodApi) CreatePeriod(ctx *gin.Context) {
-	periodR := model.Period{}
+	periodR := model.CompetitionTime{}
 	_ = ctx.ShouldBindJSON(&periodR)
-	period := &model.Period{JieCi: periodR.JieCi}
+	period := &model.CompetitionTime{Period: periodR.Period, StageID: periodR.StageID, StartTime: periodR.StartTime, EndTime: periodR.EndTime}
 	err := periodService.CreatePeriod(*period)
 	if err != nil {
 		global.LOG.Error("比赛届次创建失败!", zap.Error(err))
 		response.FailWithMessage("比赛届次创建失败", ctx)
 	} else {
-		response.FailWithMessage("比赛届次创建成功", ctx)
+		response.OkWithDetailed(period, "比赛届次创建成功", ctx)
 	}
 }
 
@@ -60,6 +60,17 @@ func (s *PeriodApi) GetPeriod(ctx *gin.Context) {
 		response.OkWithDetailed(period, "比赛届次获取成功", ctx)
 	}
 }
+
+//func (s *PeriodApi) GetCurrentPeriod(ctx *gin.Context) {
+//	var reqId request.GetById
+//	_ = ctx.ShouldBindJSON(&reqId)
+//	if period, err := periodService.GetPeriod(reqId.ID); err != nil {
+//		global.LOG.Error("比赛届次获取失败!", zap.Error(err))
+//		response.FailWithDetailed(period, "比赛届次获取失败", ctx)
+//	} else {
+//		response.OkWithDetailed(period, "比赛届次获取成功", ctx)
+//	}
+//}
 
 func (s *PeriodApi) GetPeriodList(ctx *gin.Context) {
 	var pageInfo request.PageInfo

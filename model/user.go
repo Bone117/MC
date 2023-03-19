@@ -15,4 +15,5 @@ type User struct {
 	Phone       string      `json:"phone"  gorm:"comment:用户手机号"`                      // 用户手机号
 	Email       string      `json:"email"  gorm:"comment:用户邮箱"`                       // 用户邮箱
 	Authorities []Authority `json:"authorities" gorm:"many2many:user_authority"`
+	Signs       []Sign      `gorm:"foreignkey:ID"`
 }

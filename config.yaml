@@ -7,6 +7,15 @@ captcha:
   key-long: 6
   img-width: 240
   img-height: 80
+cors:
+  mode: whitelist
+  whitelist:
+    - allow-origin: example1.com
+      allow-methods: GET, POST
+      allow-headers: content-type
+      expose-headers: Content-Length, Access-Control-Allow-Origin, Access-Control-Allow-Headers,
+        Content-Type
+      allow-credentials: true
 jwt:
   signing-key: Qm9uZQ==
   expires-time: 604800

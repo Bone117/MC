@@ -109,12 +109,57 @@ func (userService UserService) GetUserInfo(uuid uuid.UUID) (user model.User, err
 func (userService *UserService) GetUserInfoList(pageInfo request.PageInfo) (list interface{}, total int64, err error) {
 	var userList []model.User
 	limit := pageInfo.PageSize
-	offset := pageInfo.PageSize * (pageInfo.Page - 1)
+	//offset := pageInfo.PageSize * (pageInfo.Page - 1)
+	offset := pageInfo.Page
 	db := global.DB.Model(&model.User{})
 	err = db.Count(&total).Error
 	if err != nil {
 		return
 	}
-	err = db.Limit(limit).Offset(offset).Preload("Authorities").Find(&userList).Error
+
+	if pageInfo.Keyword != nil {
+		keyWord := pageInfo.Keyword
+		whereStr := ""
+		whereArgs := []interface{}{}
+		for key, val := range keyWord {
+			whereStr += fmt.Sprintf("%s = ? ", key)
+			whereArgs = append(whereArgs, val)
+			if len(whereArgs) != len(keyWord) {
+				whereStr += "AND "
+			}
+		}
+		err = db.Debug().Limit(limit).Offset(offset).Where(whereStr, whereArgs...).Preload("Authorities").Find(&userList).Statement.Error
+	} else {
+		err = db.Debug().Limit(limit).Offset(offset).Preload("Authorities").Find(&userList).Error
+	}
 	return userList, total, err
+}
+
+func (userService *UserService) GetUserListByAuthorityID(pageInfo request.PageInfo) (interface{}, int64, error) {
+	var userList []model.User
+	var total int64
+	limit := pageInfo.PageSize
+	offset := pageInfo.Page
+	db := global.DB.Model(&model.User{})
+	db = db.Joins("INNER JOIN user_authority ON user_authority.user_id = users.id").
+		Joins("INNER JOIN authorities ON authorities.authority_id = user_authority.authority_authority_id")
+	if pageInfo.Keyword != nil {
+		for key, val := range pageInfo.Keyword {
+			if key == "authorityId" {
+				db = db.Where("authorities.authority_id IN (?)", val)
+			}
+		}
+	}
+
+	err := db.Count(&total).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	err = db.Preload("Authorities").Limit(limit).Offset((offset - 1) * limit).Find(&userList).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return userList, total, nil
 }

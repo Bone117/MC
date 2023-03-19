@@ -4,13 +4,15 @@ import "server/global"
 
 type Sign struct {
 	global.MODEL
-	UserId         uint   `json:"userId" gorm:"not null;comment:用户id"`         // 用户id
-	JieCiId        uint   `json:"jieCiId"`                                     // 届次
-	WorkName       string `json:"workName" gorm:"not null;comment:作品名称"`       // 作品名称
-	WorkFileTypeId uint   `json:"workFileTypeId" gorm:"not null;comment:作品类型"` // 作品类型
-	OtherAuthor    string `json:"otherAuthor" gorm:"comment:其他作者"`             // 其他作者
-	WorkAdviser    string `json:"workAdviser" gorm:"comment:指导老师"`             // 指导老师
-	WorkSoftware   string `json:"workSoftware" gorm:"comment:平台"`              // 平台
-	IsSubmit       bool   `json:"isSubmit" gorm:"default:false;comment:是否提交"`  //是否提交
-	WorkDesc       string `json:"workDesc" gorm:"not null;comment:作品简介"`       // 作品简介
+	UserId         uint   `json:"userId" gorm:"not null;comment:用户id"`             // 用户id
+	JieCiId        uint   `json:"jieCiId"`                                         // 届次
+	WorkName       string `json:"workName" gorm:"not null;comment:作品名称"`           // 作品名称
+	WorkFileTypeId uint   `json:"workFileTypeId" gorm:"not null;comment:作品类型"`     // 作品类型
+	OtherAuthor    string `json:"otherAuthor" gorm:"comment:其他作者"`                 // 其他作者
+	WorkAdviser    string `json:"workAdviser" gorm:"comment:指导老师"`                 // 指导老师
+	WorkSoftware   string `json:"workSoftware" gorm:"comment:平台"`                  // 平台
+	Status         uint   `json:"status" gorm:"default:1;comment:审核状态" `           // 1.待审核 2.已审核 3.待发布 4.已发布
+	WorkDesc       string `json:"workDesc" gorm:"type:text;not null;comment:作品简介"` // 作品简介
+	RejReason      string `json:"rejReason" gorm:"type:text;;comment:不通过理由"`       // 审核不通过理由
+	Files          []File `gorm:"foreignkey:SignId"`                               // 定义关联关系
 }

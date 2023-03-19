@@ -8,6 +8,7 @@ type ApiGroup struct {
 	NoticeApi
 	StageApi
 	PeriodApi
+	ReviewApi
 }
 
 var (
@@ -17,6 +18,7 @@ var (
 	noticeService    = service.ServiceGroupApp.NoticeService
 	stageService     = service.ServiceGroupApp.StageService
 	periodService    = service.ServiceGroupApp.PeriodService
+	reviewService    = service.ServiceGroupApp.ReviewService
 )
 
 var ApiGroupApp = new(ApiGroup)

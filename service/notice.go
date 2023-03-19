@@ -31,7 +31,8 @@ func (n *NoticeService) GetNotice(noticeId uint) (model.Notice, error) {
 func (n NoticeService) GetNoticeList(pageInfo request.PageInfo) (list interface{}, total int64, err error) {
 	var noticeList []model.Notice
 	limit := pageInfo.PageSize
-	offset := pageInfo.PageSize * (pageInfo.Page - 1)
+	//offset := pageInfo.PageSize * (pageInfo.Page - 1)
+	offset := pageInfo.Page
 	db := global.DB.Model(&model.Notice{})
 	err = db.Count(&total).Error
 	if err != nil {
