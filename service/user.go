@@ -8,6 +8,8 @@ import (
 	"server/model/common/request"
 	"server/utils"
 
+	"github.com/iancoleman/strcase"
+
 	uuid "github.com/satori/go.uuid"
 	"gorm.io/gorm"
 )
@@ -122,7 +124,12 @@ func (userService *UserService) GetUserInfoList(pageInfo request.PageInfo) (list
 		whereStr := ""
 		whereArgs := []interface{}{}
 		for key, val := range keyWord {
-			whereStr += fmt.Sprintf("%s = ? ", key)
+			fieldName := strcase.ToSnake(key) // 将小驼峰命名转换为下划线命名
+			// 将数字类型的值转换为uint类型
+			if v, ok := val.(float64); ok {
+				val = uint(v)
+			}
+			whereStr += fmt.Sprintf("%s = ? ", fieldName)
 			whereArgs = append(whereArgs, val)
 			if len(whereArgs) != len(keyWord) {
 				whereStr += "AND "

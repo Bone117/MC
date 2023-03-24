@@ -14,6 +14,7 @@ func main() {
 	global.LOG = core.Zap()  // 初始化zap日志库
 	zap.ReplaceGlobals(global.LOG)
 	//	初始化mysql
+	// CREATE DATABASE m_competition CHARACTER SET utf8mb4
 	global.DB = initialize.Gorm() // gorm连接数据库
 	if global.DB != nil {
 		initialize.RegisterTables(global.DB) // 初始化表

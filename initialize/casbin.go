@@ -26,7 +26,10 @@ func SetupCasbin() {
 			_ = syncedEnforcer.LoadPolicy()
 			global.LOG.Info("SetupCasbin succeed")
 			entities := []gormadapter.CasbinRule{
-				{Ptype: "p", V0: "777", V1: "*", V2: "*"},
+				{Ptype: "p", V0: "777", V1: "*", V2: "POST"},
+				{Ptype: "p", V0: "777", V1: "*", V2: "GET"},
+				{Ptype: "p", V0: "777", V1: "*", V2: "DELETE"},
+				{Ptype: "p", V0: "666", V1: "/review/getReviewList", V2: "POST"},
 				{Ptype: "p", V0: "444", V1: "/stage/*", V2: "POST"},
 				{Ptype: "p", V0: "444", V1: "/stage/*", V2: "GET"},
 				{Ptype: "p", V0: "444", V1: "/stage/review/*", V2: "deny"},

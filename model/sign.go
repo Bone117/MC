@@ -11,7 +11,7 @@ type Sign struct {
 	OtherAuthor    string `json:"otherAuthor" gorm:"comment:其他作者"`                 // 其他作者
 	WorkAdviser    string `json:"workAdviser" gorm:"comment:指导老师"`                 // 指导老师
 	WorkSoftware   string `json:"workSoftware" gorm:"comment:平台"`                  // 平台
-	Status         uint   `json:"status" gorm:"default:1;comment:审核状态" `           // 1.待审核 2.已审核 3.待发布 4.已发布
+	Status         uint   `json:"status" gorm:"default:0;comment:审核状态" `           // 1.已通过 2.已拒绝 3.待发布 4.已发布 其它->待审核
 	WorkDesc       string `json:"workDesc" gorm:"type:text;not null;comment:作品简介"` // 作品简介
 	RejReason      string `json:"rejReason" gorm:"type:text;;comment:不通过理由"`       // 审核不通过理由
 	Files          []File `gorm:"foreignkey:SignId"`                               // 定义关联关系

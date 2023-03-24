@@ -16,5 +16,7 @@ func (p *PeriodRouter) InitReviewRouter(Router *gin.RouterGroup) {
 		reviewRouter.POST("deleteReview", reviewApi.DeleteReview)
 		reviewRouter.POST("updateReview", reviewApi.UpdateReview)
 		reviewRouter.POST("getReviewList", reviewApi.GetReviewList)
+
+		reviewRouter.POST("createJudge", reviewApi.CreateJudge)
 	}
 }

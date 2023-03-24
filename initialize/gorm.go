@@ -241,4 +241,13 @@ func RegisterTables(db *gorm.DB) {
 		global.LOG.Error("register review table failed", zap.Error(err))
 		os.Exit(0)
 	}
+
+	// 评委表初始化
+	err = db.AutoMigrate(
+		model.JudgeSign{},
+	)
+	if err != nil {
+		global.LOG.Error("register judge table failed", zap.Error(err))
+		os.Exit(0)
+	}
 }

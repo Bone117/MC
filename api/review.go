@@ -45,6 +45,28 @@ func (r *ReviewApi) CreateReview(ctx *gin.Context) {
 	}
 }
 
+func (r *ReviewApi) CreateJudge(ctx *gin.Context) {
+	reviewR := Req.ReviewRequest{}
+	var err error
+	_ = ctx.ShouldBindJSON(&reviewR)
+	judge := &model.JudgeSign{JieCiId: reviewR.JieCiId}
+
+	for _, signId := range reviewR.SignId {
+		for _, userId := range reviewR.UserId {
+			judge.JudgeUserId = userId
+			judge.SignId = signId
+			err = reviewService.CreateJudge(*judge)
+		}
+	}
+
+	if err != nil {
+		global.LOG.Error("审核创建失败!", zap.Error(err))
+		response.FailWithMessage("审核创建失败", ctx)
+	} else {
+		response.OkWithMessage("审核创建成功", ctx)
+	}
+}
+
 func (r *ReviewApi) DeleteReview(ctx *gin.Context) {
 	review := Req.ReviewRequest{}
 	_ = ctx.ShouldBindJSON(&review)
