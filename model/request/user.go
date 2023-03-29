@@ -7,8 +7,16 @@ type Register struct {
 	NickName string `json:"nickName" gorm:"default:'newUser'"`
 	Password string `json:"password"`
 	Phone    string `json:"phone"`
+	Email    string `json:"email"`
 	//AuthorityId  string   `json:"authorityId"`
 	AuthorityIds []string `json:"authorityIds"`
+}
+
+type ForgotPassword struct {
+	Username string `json:"username" binding:"required"`
+	NickName string `json:"nickName" binding:"required"`
+	Phone    string `json:"phone" binding:"required"`
+	Email    string `json:"email" binding:"required,email"`
 }
 
 type Login struct {

@@ -8,6 +8,7 @@ import (
 	"server/model/common/response"
 	Req "server/model/request"
 	Res "server/model/response"
+	"time"
 
 	"server/utils"
 
@@ -57,7 +58,7 @@ func (b *BaseApi) Register(ctx *gin.Context) {
 		}
 	}
 
-	user := &model.User{Username: r.Username, NickName: r.NickName, Password: r.Password, Phone: r.Phone, Authorities: authorities}
+	user := &model.User{Username: r.Username, NickName: r.NickName, Password: r.Password, Phone: r.Phone, Email: r.Email, Authorities: authorities}
 	userReturn, err := userService.Register(*user)
 	if err != nil {
 		global.LOG.Error("注册失败!", zap.Error(err))
@@ -124,18 +125,40 @@ func (b *BaseApi) tokenNext(ctx *gin.Context, user model.User) {
 }
 
 func (b *BaseApi) ChangePassword(ctx *gin.Context) {
-	var user Req.ChangePasswordStruct
-	_ = ctx.ShouldBindJSON(&user)
-	if err := utils.Verify(user, utils.ChangePasswordVerify); err != nil {
+	var changeUser Req.ChangePasswordStruct
+	_ = ctx.ShouldBindJSON(&changeUser)
+	if err := utils.Verify(changeUser, utils.ChangePasswordVerify); err != nil {
 		response.FailWithMessage(err.Error(), ctx)
 		return
 	}
-	u := &model.User{Username: user.Username, Password: user.Password}
-	if _, err := userService.ChangePassword(u, user.NewPassword); err != nil {
+	u := &model.User{Username: changeUser.Username, Password: changeUser.Password}
+	if _, err := userService.ChangePassword(u, changeUser.NewPassword); err != nil {
 		global.LOG.Error("修改失败!", zap.Error(err))
 		response.FailWithMessage("修改失败,原密码错误!", ctx)
 	} else {
 		response.OkWithMessage("修改成功", ctx)
+	}
+}
+
+func (b *BaseApi) ForgotPassword(ctx *gin.Context) {
+	var user Req.ForgotPassword
+	_ = ctx.ShouldBindJSON(&user)
+	keyInfo := map[string]interface{}{
+		"username": user.Username,
+		"nickName": user.NickName,
+		"phone":    user.Phone,
+		"email":    user.Email,
+	}
+	if u, err := userService.GetUserInfoByKeys(keyInfo); err != nil {
+		global.LOG.Error("信息错误!", zap.Error(err))
+		response.FailWithMessage("信息有误或该用户不存在", ctx)
+	} else {
+		if err = userService.ResetPassword(u.ID); err != nil {
+			global.LOG.Error("重置失败!", zap.Error(err))
+			response.FailWithMessage("重置失败"+err.Error(), ctx)
+		} else {
+			response.OkWithMessage("重置成功密码为:123456！", ctx)
+		}
 	}
 }
 
@@ -270,5 +293,19 @@ func (b *BaseApi) GetUserList(ctx *gin.Context) {
 			Page:     pageInfo.Page,
 			PageSize: pageInfo.PageSize,
 		}, "获取成功", ctx)
+	}
+}
+
+func (b *BaseApi) GetStage(ctx *gin.Context) {
+	var currentTime request.GetStage
+	//_ = ctx.ShouldBindQuery(&currentTime)
+	_ = ctx.ShouldBindJSON(&currentTime)
+	currentT, _ := time.ParseInLocation("2006-01-02 15:04:05", currentTime.CurrentTime, time.Local)
+	//println(currentT)
+	if stage, err := stageService.GetStage(currentT); err != nil {
+		global.LOG.Error("比赛时间获取失败!", zap.Error(err))
+		response.FailWithDetailed(stage, "当前暂无比赛", ctx)
+	} else {
+		response.OkWithDetailed(stage, "比赛时间获取成功", ctx)
 	}
 }

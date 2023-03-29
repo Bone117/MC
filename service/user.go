@@ -52,6 +52,7 @@ func (userService *UserService) ChangePassword(u *model.User, newPassword string
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println(u.Password, user.Password)
 	if ok := utils.BcryptCheck(u.Password, user.Password); !ok {
 		return nil, errors.New("原密码错误")
 	}
@@ -105,6 +106,23 @@ func (userService *UserService) SetUserAuthorities(id uint, authorityIds []strin
 func (userService UserService) GetUserInfo(uuid uuid.UUID) (user model.User, err error) {
 	var reqUser model.User
 	err = global.DB.Debug().Preload("Authorities").First(&reqUser, "uuid = ?", uuid).Error
+	return reqUser, err
+}
+
+func (userService UserService) GetUserInfoByKeys(keyInfo map[string]interface{}) (user model.User, err error) {
+	var reqUser model.User
+	whereStr := ""
+	whereArgs := []interface{}{}
+	for key, val := range keyInfo {
+		fieldName := strcase.ToSnake(key) // 将小驼峰命名转换为下划线命名
+		//fieldName := key
+		whereStr += fmt.Sprintf("%s = ? ", fieldName)
+		whereArgs = append(whereArgs, val)
+		if len(whereArgs) != len(keyInfo) {
+			whereStr += "AND "
+		}
+	}
+	err = global.DB.Debug().Where(whereStr, whereArgs...).Preload("Authorities").First(&reqUser).Error
 	return reqUser, err
 }
 

@@ -15,6 +15,8 @@ func (s *BaseRouter) InitBaseRouter(Router *gin.RouterGroup) (R gin.IRoutes) {
 		baseRouter.POST("login", baseApi.Login)
 		baseRouter.POST("captcha", baseApi.Captcha)
 		baseRouter.POST("register", baseApi.Register)
+		baseRouter.POST("forgotPassword", baseApi.ForgotPassword)
+		baseRouter.POST("getStage", baseApi.GetStage)
 		baseRouter.GET("/uploads/file/:file_path", baseApi.File)
 	}
 	return baseRouter

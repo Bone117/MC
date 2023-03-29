@@ -10,7 +10,6 @@ import (
 	Res "server/model/response"
 	"server/utils"
 	"strconv"
-	"time"
 
 	"gorm.io/gorm"
 
@@ -113,20 +112,6 @@ func (s *StageApi) GetSignList(ctx *gin.Context) {
 			Page:     pageInfo.Page,
 			PageSize: pageInfo.PageSize,
 		}, "获取报名列表成功", ctx)
-	}
-}
-
-func (s *StageApi) GetStage(ctx *gin.Context) {
-	var currentTime request.GetStage
-	//_ = ctx.ShouldBindQuery(&currentTime)
-	_ = ctx.ShouldBindJSON(&currentTime)
-	currentT, _ := time.ParseInLocation("2006-01-02 15:04:05", currentTime.CurrentTime, time.Local)
-	//println(currentT)
-	if stage, err := stageService.GetStage(currentT); err != nil {
-		global.LOG.Error("比赛时间获取失败!", zap.Error(err))
-		response.FailWithDetailed(stage, "当前暂无比赛", ctx)
-	} else {
-		response.OkWithDetailed(stage, "比赛时间获取成功", ctx)
 	}
 }
 
