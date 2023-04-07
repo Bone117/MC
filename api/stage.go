@@ -129,37 +129,53 @@ func (s *StageApi) UploadFile(ctx *gin.Context) {
 		response.FailWithMessage("接收文件失败", ctx)
 		return
 	}
-	fileTypeID, _ := strconv.Atoi(ctx.PostForm("fileTypeID"))
-	signID, _ := strconv.Atoi(ctx.PostForm("signId"))
-
-	keyWords := map[string]interface{}{
-		"FileTypeID": uint(fileTypeID),
-		"SignId":     uint(signID),
-	}
-	file, err := stageService.GetFile(keyWords)
-	if !errors.Is(err, gorm.ErrRecordNotFound) {
-		response.FailWithDetailed(file, "文件已存在", ctx)
-		return
-	}
-
+	var f1 model.File
 	userid := utils.GetUserID(ctx)
 	jieCiId, err := stageService.GetJieCi()
-	if err != nil {
-		response.FailWithMessage(err.Error(), ctx)
-		return
-	}
-	filePath, uploadErr := utils.UploadFile(header, userid, jieCiId) // 文件上传后拿到文件路径
-	if uploadErr != nil {
-		panic(err)
-	}
+	fileTypeIDStr := ctx.PostForm("fileTypeID")
+	signIDStr := ctx.PostForm("signId")
+	if fileTypeIDStr != "" && signIDStr != "" {
+		fileTypeID, _ := strconv.Atoi(fileTypeIDStr)
+		signID, _ := strconv.Atoi(signIDStr)
+		keyWords := map[string]interface{}{
+			"FileTypeID": uint(fileTypeID),
+			"SignId":     uint(signID),
+		}
+		file, err := stageService.GetFile(keyWords)
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			response.FailWithDetailed(file, "文件已存在", ctx)
+			return
+		}
+		if err != nil {
+			response.FailWithMessage(err.Error(), ctx)
+			return
+		}
+		filePath, uploadErr := utils.UploadFile(header, userid, jieCiId) // 文件上传后拿到文件路径
+		if uploadErr != nil {
+			panic(err)
+		}
 
-	f1 := model.File{
-		UserId:     utils.GetUserID(ctx),
-		Url:        filePath,
-		FileName:   header.Filename,
-		FileTypeID: uint(fileTypeID),
-		SignId:     uint(signID),
+		f1 = model.File{
+			UserId:     utils.GetUserID(ctx),
+			Url:        filePath,
+			FileName:   header.Filename,
+			FileTypeID: uint(fileTypeID),
+			SignId:     uint(signID),
+		}
+	} else {
+		filePath, uploadErr := utils.UploadFile(header, userid, jieCiId) // 文件上传后拿到文件路径
+		if uploadErr != nil {
+			panic(err)
+		}
+		f1 = model.File{
+			UserId:   utils.GetUserID(ctx),
+			Url:      filePath,
+			FileName: header.Filename,
+		}
 	}
+	//fileTypeID, _ := strconv.Atoi(ctx.PostForm("fileTypeID"))
+	//signID, _ := strconv.Atoi(ctx.PostForm("signId"))
+
 	if file, err := stageService.Upload(f1); err != nil {
 		response.FailWithMessage("上传失败", ctx)
 		return

@@ -45,9 +45,9 @@ func RegisterTables(db *gorm.DB) {
 		userEntities := []model.User{
 			{
 				UUID:        uuid.NewV4(),
-				Username:    "admin",
-				Password:    utils.BcryptHash("admin123"),
-				NickName:    "超级管理员1",
+				Username:    "McAdmin",
+				Password:    utils.BcryptHash("McAdmin123"),
+				NickName:    "超级管理员",
 				Authorities: []model.Authority{{AuthorityId: "777"}},
 				Phone:       "17857094799",
 				Email:       "785484564@qq.com",
@@ -244,10 +244,10 @@ func RegisterTables(db *gorm.DB) {
 
 	// 评委表初始化
 	err = db.AutoMigrate(
-		model.JudgeSign{},
+		model.Evaluate{},
 	)
 	if err != nil {
-		global.LOG.Error("register judge table failed", zap.Error(err))
+		global.LOG.Error("register evaluate table failed", zap.Error(err))
 		os.Exit(0)
 	}
 }

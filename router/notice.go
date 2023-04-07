@@ -15,7 +15,7 @@ func (n *NoticeRouter) InitNoticeRouter(Router *gin.RouterGroup) {
 	noticeApi := api.ApiGroupApp.NoticeApi
 	{
 		noticeRouter.POST("createNotice", noticeApi.CreateNotice)
-		noticeRouter.DELETE("deleteNotice", noticeApi.DeleteNotice)
+		noticeRouter.POST("deleteNotice", noticeApi.DeleteNotice)
 		noticeRouter.POST("updateNotice", noticeApi.UpdateNotice)
 	}
 	{

@@ -38,19 +38,19 @@ func (r *ReviewService) CreateReview(review model.ReviewSign) error {
 	return nil
 }
 
-func (r *ReviewService) CreateJudge(review model.JudgeSign) error {
-	var existingJudge model.JudgeSign
-	err := global.DB.Where(&model.JudgeSign{
-		JudgeUserId: review.JudgeUserId,
-		SignId:      review.SignId,
-	}).FirstOrCreate(&existingJudge).Error
+func (r *ReviewService) CreateEvaluate(review model.Evaluate) error {
+	var existingEvaluate model.Evaluate
+	err := global.DB.Where(&model.Evaluate{
+		EvaluateUserId: review.EvaluateUserId,
+		SignId:         review.SignId,
+	}).FirstOrCreate(&existingEvaluate).Error
 	if err != nil {
 		return err
 	}
 
 	// 如果存在相同的记录则更新，否则创建新记录
-	if existingJudge.ID > 0 {
-		err = global.DB.Model(&existingJudge).Updates(&review).Error
+	if existingEvaluate.ID > 0 {
+		err = global.DB.Model(&existingEvaluate).Updates(&review).Error
 		if err != nil {
 			return err
 		}

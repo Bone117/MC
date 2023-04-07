@@ -20,12 +20,6 @@ func (r *ReviewApi) CreateReview(ctx *gin.Context) {
 	reviewR := Req.ReviewRequest{}
 	var err error
 	_ = ctx.ShouldBindJSON(&reviewR)
-	//for _, signId := range reviewR.SignId {
-	//	for _, userId := range reviewR.UserId {
-	//		review := &model.ReviewSign{ReviewUserId: userId, SignId: signId, JieCiId: reviewR.JieCiId}
-	//		err = reviewService.CreateReview(*review)
-	//	}
-	//}
 	review := &model.ReviewSign{JieCiId: reviewR.JieCiId}
 
 	for _, signId := range reviewR.SignId {
@@ -45,25 +39,25 @@ func (r *ReviewApi) CreateReview(ctx *gin.Context) {
 	}
 }
 
-func (r *ReviewApi) CreateJudge(ctx *gin.Context) {
-	reviewR := Req.ReviewRequest{}
+func (r *ReviewApi) CreateEvaluate(ctx *gin.Context) {
+	evaluateR := Req.EvaluateRequest{}
 	var err error
-	_ = ctx.ShouldBindJSON(&reviewR)
-	judge := &model.JudgeSign{JieCiId: reviewR.JieCiId}
+	_ = ctx.ShouldBindJSON(&evaluateR)
+	evaluate := &model.Evaluate{JieCiId: evaluateR.JieCiId}
 
-	for _, signId := range reviewR.SignId {
-		for _, userId := range reviewR.UserId {
-			judge.JudgeUserId = userId
-			judge.SignId = signId
-			err = reviewService.CreateJudge(*judge)
+	for _, signId := range evaluateR.SignId {
+		for _, userId := range evaluateR.UserId {
+			evaluate.EvaluateUserId = userId
+			evaluate.SignId = signId
+			err = reviewService.CreateEvaluate(*evaluate)
 		}
 	}
 
 	if err != nil {
-		global.LOG.Error("审核创建失败!", zap.Error(err))
-		response.FailWithMessage("审核创建失败", ctx)
+		global.LOG.Error("评审创建失败!", zap.Error(err))
+		response.FailWithMessage("评审创建失败", ctx)
 	} else {
-		response.OkWithMessage("审核创建成功", ctx)
+		response.OkWithMessage("评审创建成功", ctx)
 	}
 }
 
@@ -84,9 +78,6 @@ func (r *ReviewApi) DeleteReview(ctx *gin.Context) {
 func (r *ReviewApi) UpdateReview(ctx *gin.Context) {
 	reviewR := model.ReviewSign{}
 	_ = ctx.ShouldBindJSON(&reviewR)
-	//if err := utils.Verify(reviewR, utils.IdVerify); err != nil {
-	//	response.FailWithMessage(err.Error(), ctx)
-	//}
 	review := &model.ReviewSign{MODEL: global.MODEL{ID: reviewR.ID}, ReviewUserId: reviewR.ReviewUserId, SignId: reviewR.SignId, JieCiId: reviewR.JieCiId}
 	err := reviewService.UpdateReview(*review)
 	if err != nil {

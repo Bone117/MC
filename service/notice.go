@@ -38,6 +38,6 @@ func (n NoticeService) GetNoticeList(pageInfo request.PageInfo) (list interface{
 	if err != nil {
 		return
 	}
-	err = db.Limit(limit).Offset(offset).Find(&noticeList).Error
+	err = db.Limit(limit).Offset(offset).Order("created_at DESC").Find(&noticeList).Error
 	return noticeList, total, err
 }
