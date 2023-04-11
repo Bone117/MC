@@ -41,9 +41,6 @@ func (s *PeriodService) DeletePeriod(periodID int) error {
 func (s *PeriodService) GetPeriodList(pageInfo request.PageInfo) (list interface{}, total int64, err error) {
 	var periodList []model.CompetitionTime
 
-	//cpName := reflect.TypeOf(model.CompetitionTime{}).Name()
-	//cpTable := fmt.Sprintf(":%ss", cpName)
-
 	limit := pageInfo.PageSize
 	//offset := pageInfo.PageSize * (pageInfo.Page - 1)
 	offset := pageInfo.Page

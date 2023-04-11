@@ -29,13 +29,16 @@ func (s *StageApi) Sign(ctx *gin.Context) {
 	}
 	jieCiId, err := stageService.GetJieCi()
 	if err != nil {
-		response.FailWithMessage(err.Error(), ctx)
+		global.LOG.Error("获取届次失败!", zap.Error(err))
+		response.FailWithMessage("比赛暂未开始", ctx)
 		return
 	}
 	sign := &model.Sign{
 		UserId:         utils.GetUserID(ctx),
 		WorkName:       signReq.WorkName,
 		WorkFileTypeId: signReq.WorkFileTypeId,
+		Author:         signReq.Author,
+		Username:       signReq.Username,
 		WorkSoftware:   signReq.WorkSoftware,
 		OtherAuthor:    signReq.OtherAuthor,
 		WorkAdviser:    signReq.WorkAdviser,
@@ -146,10 +149,7 @@ func (s *StageApi) UploadFile(ctx *gin.Context) {
 			response.FailWithDetailed(file, "文件已存在", ctx)
 			return
 		}
-		if err != nil {
-			response.FailWithMessage(err.Error(), ctx)
-			return
-		}
+
 		filePath, uploadErr := utils.UploadFile(header, userid, jieCiId) // 文件上传后拿到文件路径
 		if uploadErr != nil {
 			panic(err)

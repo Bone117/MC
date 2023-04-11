@@ -9,9 +9,11 @@ var (
 	AuthorityIdVerify      = Rules{"authorityId": {NotEmpty()}}
 	SetUserAuthorityVerify = Rules{"authorityId": {NotEmpty()}}
 
-	NoticeVerify = Rules{"title": {NotEmpty()}, "desc": {NotEmpty()}, "content": {NotEmpty()}}
+	NoticeVerify = Rules{"Title": {NotEmpty()}, "Content": {NotEmpty()}}
 
-	SignVerify = Rules{"workName": {NotEmpty()}, "workFileTypeId": {NotEmpty()}, "workSoftware": {NotEmpty()}, "workDesc": {NotEmpty()}, "majorId": {NotEmpty()}, "gradeName": {NotEmpty()}}
+	AssignVerify = Rules{"SignId": {NotEmpty()}, "JieCiId": {NotEmpty()}}
+
+	SignVerify = Rules{"WorkName": {NotEmpty()}, "WorkFileTypeId": {NotEmpty()}, "WorkSoftware": {NotEmpty()}, "workDesc": {NotEmpty()}}
 
 	PageInfoVerify = Rules{"page": {NotEmpty()}, "pageSize": {NotEmpty()}}
 )

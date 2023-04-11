@@ -80,11 +80,8 @@ func (n *NoticeApi) GetNotice(ctx *gin.Context) {
 
 func (n *NoticeApi) GetNoticeList(ctx *gin.Context) {
 	var pageInfo request.PageInfo
-	_ = ctx.ShouldBindQuery(&pageInfo)
-	if err := utils.Verify(pageInfo, utils.PageInfoVerify); err != nil {
-		response.FailWithMessage(err.Error(), ctx)
-		return
-	}
+	_ = ctx.ShouldBindJSON(&pageInfo)
+
 	if list, total, err := noticeService.GetNoticeList(pageInfo); err != nil {
 		global.LOG.Error("获取失败!", zap.Error(err))
 		response.FailWithMessage("获取失败", ctx)

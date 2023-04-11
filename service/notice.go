@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"server/global"
 	"server/model"
 	"server/model/common/request"
@@ -38,6 +39,22 @@ func (n NoticeService) GetNoticeList(pageInfo request.PageInfo) (list interface{
 	if err != nil {
 		return
 	}
-	err = db.Limit(limit).Offset(offset).Order("created_at DESC").Find(&noticeList).Error
+
+	if pageInfo.Keyword != nil {
+		keyWord := pageInfo.Keyword
+		whereStr := ""
+		whereArgs := []interface{}{}
+		for key, val := range keyWord {
+			whereStr += fmt.Sprintf("%s = ? ", key)
+			whereArgs = append(whereArgs, val)
+			if len(whereArgs) != len(keyWord) {
+				whereStr += "AND "
+			}
+		}
+		err = db.Debug().Limit(limit).Offset(offset).Order("created_at DESC").Where(whereStr, whereArgs...).Find(&noticeList).Statement.Error
+	} else {
+		err = db.Limit(limit).Offset(offset).Order("created_at DESC").Find(&noticeList).Error
+	}
+
 	return noticeList, total, err
 }

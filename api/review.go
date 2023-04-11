@@ -16,20 +16,29 @@ type ReviewApi struct {
 }
 
 func (r *ReviewApi) CreateReview(ctx *gin.Context) {
-	//TODO 需要再修改
 	reviewR := Req.ReviewRequest{}
 	var err error
 	_ = ctx.ShouldBindJSON(&reviewR)
-	review := &model.ReviewSign{JieCiId: reviewR.JieCiId}
+	if err = utils.Verify(reviewR, utils.AssignVerify); err != nil {
+		response.FailWithMessage(err.Error(), ctx)
+		return
+	}
+
+	var reviewSigns []*model.ReviewSign
 
 	for _, signId := range reviewR.SignId {
 		for _, userId := range reviewR.UserId {
-			// set the ReviewUserId and SignId fields for each iteration
-			review.ReviewUserId = userId
-			review.SignId = signId
-			err = reviewService.CreateReview(*review)
+			// 为每个评委和作品创建一个新的评估记录
+			reviewSign := &model.ReviewSign{
+				JieCiId:      reviewR.JieCiId,
+				ReviewUserId: userId,
+				SignId:       signId,
+			}
+			reviewSigns = append(reviewSigns, reviewSign)
 		}
 	}
+
+	err = reviewService.CreateOrUpdateReviews(reviewSigns, reviewR.SignId, reviewR.UserId)
 
 	if err != nil {
 		global.LOG.Error("审核创建失败!", zap.Error(err))
@@ -43,15 +52,23 @@ func (r *ReviewApi) CreateEvaluate(ctx *gin.Context) {
 	evaluateR := Req.EvaluateRequest{}
 	var err error
 	_ = ctx.ShouldBindJSON(&evaluateR)
-	evaluate := &model.Evaluate{JieCiId: evaluateR.JieCiId}
 
+	// 创建一个新的评估记录列表
+	var evaluates []*model.Evaluate
 	for _, signId := range evaluateR.SignId {
 		for _, userId := range evaluateR.UserId {
-			evaluate.EvaluateUserId = userId
-			evaluate.SignId = signId
-			err = reviewService.CreateEvaluate(*evaluate)
+			// 为每个评委和作品创建一个新的评估记录
+			evaluate := &model.Evaluate{
+				JieCiId:        evaluateR.JieCiId,
+				EvaluateUserId: userId,
+				SignId:         signId,
+			}
+			evaluates = append(evaluates, evaluate)
 		}
 	}
+
+	// 调用服务层的CreateEvaluates方法批量创建或更新评估记录
+	err = reviewService.CreateOrUpdateEvaluates(evaluates, evaluateR.SignId, evaluateR.UserId)
 
 	if err != nil {
 		global.LOG.Error("评审创建失败!", zap.Error(err))
@@ -107,4 +124,39 @@ func (r *ReviewApi) GetReviewList(ctx *gin.Context) {
 		}, "获取成功", ctx)
 	}
 
+}
+
+func (r *ReviewApi) GetEvaluateList(ctx *gin.Context) {
+	var pageInfo request.PageInfo
+	_ = ctx.ShouldBindJSON(&pageInfo)
+	if err := utils.Verify(pageInfo, utils.PageInfoVerify); err != nil {
+		response.FailWithMessage(err.Error(), ctx)
+		return
+	}
+	userID := utils.GetUserID(ctx)
+	if list, total, err := reviewService.GetEvaluateList(pageInfo, userID); err != nil {
+		global.LOG.Error("获取失败!", zap.Error(err))
+		response.FailWithMessage("暂未分配", ctx)
+	} else {
+		response.OkWithDetailed(response.PageResult{
+			List:     list,
+			Total:    total,
+			Page:     pageInfo.Page,
+			PageSize: pageInfo.PageSize,
+		}, "获取成功", ctx)
+	}
+
+}
+
+func (r *ReviewApi) UpdateEvaluate(ctx *gin.Context) {
+	evaluateR := Req.UpdateEvaluateRequest{}
+	_ = ctx.ShouldBindJSON(&evaluateR)
+	evaluate := &model.Evaluate{SignId: evaluateR.SignId, EvaluateUserId: utils.GetUserID(ctx), Score: evaluateR.Score, Comments: evaluateR.Comments}
+	err := reviewService.UpdateEvaluate(*evaluate)
+	if err != nil {
+		global.LOG.Error("评分更新失败!", zap.Error(err))
+		response.FailWithMessage("评分失败", ctx)
+	} else {
+		response.OkWithMessage("评分成功", ctx)
+	}
 }

@@ -194,22 +194,23 @@ func (b *BaseApi) SetUserInfo(ctx *gin.Context) {
 		response.FailWithMessage(err.Error(), ctx)
 		return
 	}
-	if len(user.AuthorityIds) != 0 {
-		err := userService.SetUserAuthorities(user.ID, user.AuthorityIds)
-		if err != nil {
-			global.LOG.Error("设置失败!", zap.Error(err))
-			response.FailWithMessage("设置失败", ctx)
-		}
+	err := userService.SetUserAuthorities(user.ID, user.AuthorityIds)
+	if err != nil {
+		global.LOG.Error("更新角色权限失败!", zap.Error(err))
+		response.FailWithMessage("更新角色权限失败", ctx)
 	}
-
-	if err := userService.SetUserInfo(model.User{
+	updateUser := model.User{
 		MODEL: global.MODEL{
 			ID: user.ID,
 		},
 		NickName: user.NickName,
 		Phone:    user.Phone,
 		Email:    user.Email,
-	}); err != nil {
+	}
+	if user.Password != "" {
+		updateUser.Password = utils.BcryptHash(user.Password)
+	}
+	if err := userService.SetUserInfo(updateUser); err != nil {
 		global.LOG.Error("设置失败!", zap.Error(err))
 		response.FailWithMessage("设置失败", ctx)
 	} else {
