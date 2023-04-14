@@ -160,3 +160,19 @@ func (r *ReviewApi) UpdateEvaluate(ctx *gin.Context) {
 		response.OkWithMessage("评分成功", ctx)
 	}
 }
+
+func (r *ReviewApi) CreateReport(ctx *gin.Context) {
+	reportR := Req.ReportRequest{}
+	var err error
+	_ = ctx.ShouldBindJSON(&reportR)
+
+	report := &model.Report{ReportUserId: utils.GetUserID(ctx), JieCiId: reportR.JieCiId, SignId: reportR.SignId, Content: reportR.Content}
+	err = reviewService.CreateOrUpdateReport(*report)
+
+	if err != nil {
+		global.LOG.Error("举报创建失败!", zap.Error(err))
+		response.FailWithMessage("举报提交失败", ctx)
+	} else {
+		response.OkWithMessage("举报提交成功", ctx)
+	}
+}

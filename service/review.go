@@ -85,6 +85,7 @@ func (r *ReviewService) CreateOrUpdateReviews(reviews []*model.ReviewSign, signI
 func (r *ReviewService) CreateOrUpdateEvaluates(evaluates []*model.Evaluate, signIds []uint, userIds []uint) error {
 	// 使用事务处理批量创建或更新操作
 	return global.DB.Transaction(func(tx *gorm.DB) error {
+		// 修改sign的状态
 		// 删除传入的SignId和UserId组合之外的记录
 		if len(userIds) == 0 {
 			// 当userIds为空时，删除所有userId对应的数据
@@ -167,9 +168,26 @@ func (r *ReviewService) DeleteReview(reviewId uint) error {
 func (r *ReviewService) UpdateReview(review model.ReviewSign) error {
 	return global.DB.Updates(&review).Error
 }
+
 func (r *ReviewService) UpdateEvaluate(evaluate model.Evaluate) error {
-	//return global.DB.Debug().Model(&model.Evaluate{}).Where("evaluate_user_id = ? AND sign_id = ?", evaluate.EvaluateUserId, evaluate.SignId).Updates(&evaluate).Select("score", "comments").Error
-	return global.DB.Debug().Model(&model.Evaluate{}).Where("evaluate_user_id = ? AND sign_id = ?", evaluate.EvaluateUserId, evaluate.SignId).Updates(&evaluate).Omit("jie_ci_id").Error
+	//return global.DB.Debug().Model(&model.Evaluate{}).Where("evaluate_user_id = ? AND sign_id = ?", evaluate.EvaluateUserId, evaluate.SignId).Updates(&evaluate).Omit("jie_ci_id").Error
+	// 初始化事务
+	tx := global.DB.Begin()
+
+	// 更新Sign的status为3
+	if err := tx.Model(&model.Sign{}).Where("id = ?", evaluate.SignId).Update("status", 3).Error; err != nil {
+		tx.Rollback() // 出错时回滚事务
+		return err
+	}
+
+	// 更新Evaluate
+	if err := tx.Debug().Model(&model.Evaluate{}).Where("evaluate_user_id = ? AND sign_id = ?", evaluate.EvaluateUserId, evaluate.SignId).Updates(&evaluate).Omit("jie_ci_id").Error; err != nil {
+		tx.Rollback() // 出错时回滚事务
+		return err
+	}
+
+	// 提交事务
+	return tx.Commit().Error
 }
 
 func (r *ReviewService) GetReviewList(pageInfo request.PageInfo) (list interface{}, total int64, err error) {
@@ -262,4 +280,23 @@ func (r *ReviewService) GetEvaluateList(pageInfo request.PageInfo, userID uint) 
 		signList = append(signList, sign)
 	}
 	return signList, total, nil
+}
+
+func (r *ReviewService) CreateOrUpdateReport(report model.Report) error {
+	var existingReport model.Report
+
+	// 查找是否已存在具有相同 ReportUserId 和 SignId 的记录
+	result := global.DB.Where("report_user_id = ? AND sign_id = ?", report.ReportUserId, report.SignId).First(&existingReport)
+
+	if result.Error == nil {
+		// 如果找到记录，则更新 Comments 字段
+		existingReport.Content = report.Content
+		return global.DB.Save(&existingReport).Error
+	} else if result.Error == gorm.ErrRecordNotFound {
+		// 如果没有找到记录，则创建新的记录
+		return global.DB.Create(&report).Error
+	} else {
+		// 其他错误
+		return result.Error
+	}
 }

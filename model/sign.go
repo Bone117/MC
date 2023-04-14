@@ -15,6 +15,7 @@ type Sign struct {
 	WorkSoftware   string     `json:"workSoftware" gorm:"comment:平台"`                  // 平台
 	Status         uint       `json:"status" gorm:"default:0;comment:审核状态" `           // 1.已通过 2.已拒绝 3.待发布 4.已发布 其它->待审核
 	WorkDesc       string     `json:"workDesc" gorm:"type:text;not null;comment:作品简介"` // 作品简介
+	CoverUrl       string     `json:"coverUrl"`                                        // 缩略图
 	RejReason      string     `json:"rejReason" gorm:"type:text;;comment:不通过理由"`       // 审核不通过理由
 	Files          []File     `gorm:"foreignkey:SignId"`                               // 定义关联关系
 	Evaluates      []Evaluate `gorm:"foreignkey:SignId;references:ID"`

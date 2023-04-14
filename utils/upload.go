@@ -2,9 +2,11 @@ package utils
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"mime/multipart"
 	"os"
+	"os/exec"
 	"path"
 	"server/global"
 	"strconv"
@@ -67,4 +69,17 @@ func DeleteFile(key string) error {
 		}
 	}
 	return nil
+}
+
+// GenerateThumbnail 生成缩略图
+func GenerateThumbnail(videoPath string) (string, error) {
+	thumbnailPath := fmt.Sprintf("%s_thumbnail.jpg", videoPath)
+
+	cmd := exec.Command("ffmpeg", "-i", videoPath, "-ss", "00:00:01", "-vframes", "1", thumbnailPath)
+	err := cmd.Run()
+	if err != nil {
+		return "", err
+	}
+
+	return thumbnailPath, nil
 }

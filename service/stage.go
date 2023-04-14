@@ -72,9 +72,13 @@ func (s *StageService) UpdateSign(signR model.Sign) error {
 	return global.DB.Debug().Updates(&signR).Error
 }
 
+func (s *StageService) UpdateSignCoverUrl(signID uint, coverUrl string) error {
+	return global.DB.Debug().Model(&model.Sign{}).Where("id = ?", signID).Update("cover_url", coverUrl).Error
+}
+
 func (s *StageService) GetSign(signId int) (model.Sign, error) {
 	var sign model.Sign
-	err := global.DB.Where("id", signId).First(&sign).Error
+	err := global.DB.Where("id", signId).Preload("Files").First(&sign).Error
 	return sign, err
 }
 

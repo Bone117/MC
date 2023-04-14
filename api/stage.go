@@ -89,7 +89,7 @@ func (s *StageApi) DeleteSign(ctx *gin.Context) {
 
 func (s *StageApi) GetSign(ctx *gin.Context) {
 	var reqId request.GetById
-	_ = ctx.ShouldBindJSON(&reqId)
+	_ = ctx.ShouldBindQuery(&reqId)
 	if sign, err := stageService.GetSign(reqId.ID); err != nil {
 		global.LOG.Error("报名信息获取失败!", zap.Error(err))
 		response.FailWithDetailed(sign, "报名信息获取失败", ctx)
@@ -152,7 +152,23 @@ func (s *StageApi) UploadFile(ctx *gin.Context) {
 
 		filePath, uploadErr := utils.UploadFile(header, userid, jieCiId) // 文件上传后拿到文件路径
 		if uploadErr != nil {
-			panic(err)
+			panic(uploadErr)
+		}
+
+		// 生成缩略图并更新Sign表
+		var coverUrl string
+		if fileTypeID == 3 {
+			coverUrl, err = utils.GenerateThumbnail(filePath)
+			if err != nil {
+				global.LOG.Error("生成缩略图失败!", zap.Error(err))
+				return
+			}
+			err = stageService.UpdateSignCoverUrl(uint(signID), coverUrl)
+			if err != nil {
+				global.LOG.Error("Sign表生成缩略图失败!", zap.Error(err))
+				response.FailWithMessage("Sign表生成缩略图失败", ctx)
+				return
+			}
 		}
 
 		f1 = model.File{
@@ -173,8 +189,6 @@ func (s *StageApi) UploadFile(ctx *gin.Context) {
 			FileName: header.Filename,
 		}
 	}
-	//fileTypeID, _ := strconv.Atoi(ctx.PostForm("fileTypeID"))
-	//signID, _ := strconv.Atoi(ctx.PostForm("signId"))
 
 	if file, err := stageService.Upload(f1); err != nil {
 		response.FailWithMessage("上传失败", ctx)

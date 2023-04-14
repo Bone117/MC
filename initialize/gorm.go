@@ -160,12 +160,12 @@ func RegisterTables(db *gorm.DB) {
 		os.Exit(0)
 	}
 
-	// 学生表
+	// 举报表
 	err = db.AutoMigrate(
-		model.Student{},
+		model.Report{},
 	)
 	if err != nil {
-		global.LOG.Error("register Student table failed", zap.Error(err))
+		global.LOG.Error("register Report table failed", zap.Error(err))
 		os.Exit(0)
 	}
 
