@@ -19,4 +19,5 @@ type Sign struct {
 	RejReason      string     `json:"rejReason" gorm:"type:text;;comment:不通过理由"`       // 审核不通过理由
 	Files          []File     `gorm:"foreignkey:SignId"`                               // 定义关联关系
 	Evaluates      []Evaluate `gorm:"foreignkey:SignId;references:ID"`
+	Reports        Report     `json:"Reports" gorm:"foreignKey:SignId"`
 }

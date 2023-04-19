@@ -27,7 +27,7 @@ func (s *StageApi) Sign(ctx *gin.Context) {
 		response.FailWithMessage(err.Error(), ctx)
 		return
 	}
-	jieCiId, err := stageService.GetJieCi()
+	period, err := stageService.GetJieCi()
 	if err != nil {
 		global.LOG.Error("获取届次失败!", zap.Error(err))
 		response.FailWithMessage("比赛暂未开始", ctx)
@@ -43,7 +43,7 @@ func (s *StageApi) Sign(ctx *gin.Context) {
 		OtherAuthor:    signReq.OtherAuthor,
 		WorkAdviser:    signReq.WorkAdviser,
 		WorkDesc:       signReq.WorkDesc,
-		JieCiId:        jieCiId,
+		JieCiId:        period.Period,
 	}
 	gra := &model.Grade{
 		UserId:    utils.GetUserID(ctx),
@@ -134,7 +134,11 @@ func (s *StageApi) UploadFile(ctx *gin.Context) {
 	}
 	var f1 model.File
 	userid := utils.GetUserID(ctx)
-	jieCiId, err := stageService.GetJieCi()
+	period, err := stageService.GetJieCi()
+	if err != nil {
+		global.LOG.Error("获取届次信息失败!", zap.Error(err))
+		return
+	}
 	fileTypeIDStr := ctx.PostForm("fileTypeID")
 	signIDStr := ctx.PostForm("signId")
 	if fileTypeIDStr != "" && signIDStr != "" {
@@ -150,7 +154,7 @@ func (s *StageApi) UploadFile(ctx *gin.Context) {
 			return
 		}
 
-		filePath, uploadErr := utils.UploadFile(header, userid, jieCiId) // 文件上传后拿到文件路径
+		filePath, uploadErr := utils.UploadFile(header, userid, period.Period) // 文件上传后拿到文件路径
 		if uploadErr != nil {
 			panic(uploadErr)
 		}
@@ -179,7 +183,7 @@ func (s *StageApi) UploadFile(ctx *gin.Context) {
 			SignId:     uint(signID),
 		}
 	} else {
-		filePath, uploadErr := utils.UploadFile(header, userid, jieCiId) // 文件上传后拿到文件路径
+		filePath, uploadErr := utils.UploadFile(header, userid, period.Period) // 文件上传后拿到文件路径
 		if uploadErr != nil {
 			panic(err)
 		}

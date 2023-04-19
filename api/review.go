@@ -176,3 +176,19 @@ func (r *ReviewApi) CreateReport(ctx *gin.Context) {
 		response.OkWithMessage("举报提交成功", ctx)
 	}
 }
+
+func (r *ReviewApi) GetReportList(ctx *gin.Context) {
+	var pageInfo request.PageInfo
+	_ = ctx.ShouldBindJSON(&pageInfo)
+	if list, total, err := reviewService.GetReportList(pageInfo); err != nil {
+		global.LOG.Error("获取失败!", zap.Error(err))
+		response.FailWithMessage("暂未分配", ctx)
+	} else {
+		response.OkWithDetailed(response.PageResult{
+			List:     list,
+			Total:    total,
+			Page:     pageInfo.Page,
+			PageSize: pageInfo.PageSize,
+		}, "获取成功", ctx)
+	}
+}

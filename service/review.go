@@ -300,3 +300,139 @@ func (r *ReviewService) CreateOrUpdateReport(report model.Report) error {
 		return result.Error
 	}
 }
+
+//func (r *ReviewService) GetReportList(pageInfo request.PageInfo) (list interface{}, total int64, err error) {
+//	var reportList []model.Report
+//	var signList []model.Sign
+//	limit := pageInfo.PageSize
+//	offset := pageInfo.Page
+//
+//	db := global.DB.Model(&model.Report{})
+//	if pageInfo.Keyword != nil {
+//		keyWord := pageInfo.Keyword
+//		whereStr := ""
+//		whereArgs := []interface{}{}
+//		for key, val := range keyWord {
+//			whereStr += fmt.Sprintf("%s = ? ", key)
+//			whereArgs = append(whereArgs, val)
+//			if len(whereArgs) != len(keyWord) {
+//				whereStr += "AND "
+//			}
+//		}
+//		db = db.Where(whereStr, whereArgs...)
+//	}
+//
+//	// 获取总数
+//	if err = db.Count(&total).Error; err != nil {
+//		return
+//	}
+//
+//	// 获取ReviewSign列表
+//	if err = db.Limit(limit).Offset(offset).Find(&reportList).Error; err != nil {
+//		return
+//	}
+//
+//	// 获取Sign列表
+//	for _, report := range reportList {
+//		sign := model.Sign{}
+//		err = global.DB.Debug().Where("id = ?", report.SignId).Preload("Reports").First(&sign).Error
+//		if err != nil {
+//			return
+//		}
+//		signList = append(signList, sign)
+//	}
+//
+//	return signList, total, nil
+//}
+
+//func (r *ReviewService) GetReportList(pageInfo request.PageInfo) (list interface{}, total int64, err error) {
+//	var reportList []model.Report
+//	limit := pageInfo.PageSize
+//	offset := pageInfo.Page
+//
+//	db := global.DB.Model(&model.Report{})
+//	if pageInfo.Keyword != nil {
+//		keyWord := pageInfo.Keyword
+//		whereStr := ""
+//		whereArgs := []interface{}{}
+//		for key, val := range keyWord {
+//			whereStr += fmt.Sprintf("%s = ? ", key)
+//			whereArgs = append(whereArgs, val)
+//			if len(whereArgs) != len(keyWord) {
+//				whereStr += "AND "
+//			}
+//		}
+//		db = db.Where(whereStr, whereArgs...)
+//	}
+//
+//	// 获取总数
+//	if err = db.Count(&total).Error; err != nil {
+//		return
+//	}
+//
+//	// 获取Report列表
+//	if err = db.Limit(limit).Offset(offset).Find(&reportList).Error; err != nil {
+//		return
+//	}
+//
+//	signList := []model.Sign{}
+//
+//	// 获取Sign列表
+//	for _, report := range reportList {
+//		sign := model.Sign{}
+//		err = global.DB.Debug().Where("id = ?", report.SignId).First(&sign).Error
+//		if err != nil {
+//			return
+//		}
+//		sign.Reports = []model.Report{report}
+//		signList = append(signList, sign)
+//	}
+//
+//	return signList, total, nil
+//}
+
+func (r *ReviewService) GetReportList(pageInfo request.PageInfo) (list interface{}, total int64, err error) {
+	var reportList []model.Report
+	limit := pageInfo.PageSize
+	offset := pageInfo.Page
+
+	db := global.DB.Model(&model.Report{})
+	if pageInfo.Keyword != nil {
+		keyWord := pageInfo.Keyword
+		whereStr := ""
+		whereArgs := []interface{}{}
+		for key, val := range keyWord {
+			whereStr += fmt.Sprintf("%s = ? ", key)
+			whereArgs = append(whereArgs, val)
+			if len(whereArgs) != len(keyWord) {
+				whereStr += "AND "
+			}
+		}
+		db = db.Where(whereStr, whereArgs...)
+	}
+
+	// 获取总数
+	if err = db.Count(&total).Error; err != nil {
+		return
+	}
+
+	// 获取Report列表
+	if err = db.Limit(limit).Offset(offset).Find(&reportList).Error; err != nil {
+		return
+	}
+
+	signList := []model.Sign{}
+
+	// 获取Sign列表
+	for _, report := range reportList {
+		sign := model.Sign{}
+		err = global.DB.Debug().Where("id = ?", report.SignId).First(&sign).Error
+		if err != nil {
+			return
+		}
+		sign.Reports = report
+		signList = append(signList, sign)
+	}
+
+	return signList, total, nil
+}

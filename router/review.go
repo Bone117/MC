@@ -22,5 +22,6 @@ func (p *PeriodRouter) InitReviewRouter(Router *gin.RouterGroup) {
 		reviewRouter.POST("updateEvaluate", reviewApi.UpdateEvaluate)
 
 		reviewRouter.POST("createReport", reviewApi.CreateReport)
+		reviewRouter.POST("getReportList", reviewApi.GetReportList)
 	}
 }

@@ -139,11 +139,11 @@ func (s StageService) GetGrade(gradeName string) (uint, error) {
 	return grade.ID, err
 }
 
-func (s *StageService) GetJieCi() (uint, error) {
+func (s *StageService) GetJieCi() (model.CompetitionTime, error) {
 	cpTime := model.CompetitionTime{}
 	now := time.Now()
 	err := global.DB.Where("start_time < ? AND end_time > ?", now, now).First(&cpTime).Error
-	return cpTime.Period, err
+	return cpTime, err
 }
 
 func (s *StageService) Upload(file model.File) (model.File, error) {
