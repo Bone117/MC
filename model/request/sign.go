@@ -4,7 +4,7 @@ type SignRequest struct {
 	JieCiId        uint   `json:"jieCiId"`
 	WorkName       string `json:"workName"`              // 作品名称
 	WorkFileTypeId uint   `json:"workFileTypeId"`        // 作品类型
-	Author         string `json:"author" `               // 第一作者
+	NickName       string `json:"nickName" `             // 第一作者
 	Username       string `json:"username" `             // 学号
 	OtherAuthor    string `json:"otherAuthor,omitempty"` // 其他作者
 	WorkAdviser    string `json:"workAdviser,omitempty"` // 指导老师

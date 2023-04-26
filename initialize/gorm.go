@@ -121,15 +121,6 @@ func RegisterTables(db *gorm.DB) {
 		global.LOG.Info("initialize Stage table success")
 	}
 
-	// 届次表
-	//err = db.AutoMigrate(
-	//	model.Period{},
-	//)
-	//if err != nil {
-	//	global.LOG.Error("register Period table failed", zap.Error(err))
-	//	os.Exit(0)
-	//}
-
 	// 专业表
 	if exist := global.DB.Migrator().HasTable(&model.Major{}); !exist {
 		err = db.AutoMigrate(
@@ -230,6 +221,15 @@ func RegisterTables(db *gorm.DB) {
 	)
 	if err != nil {
 		global.LOG.Error("register File table failed", zap.Error(err))
+		os.Exit(0)
+	}
+
+	// 点赞表
+	err = db.AutoMigrate(
+		model.UserLike{},
+	)
+	if err != nil {
+		global.LOG.Error("register UserLike table failed", zap.Error(err))
 		os.Exit(0)
 	}
 

@@ -190,9 +190,53 @@ func (r *ReviewService) UpdateEvaluate(evaluate model.Evaluate) error {
 	return tx.Commit().Error
 }
 
+//func (r *ReviewService) GetReviewList(pageInfo request.PageInfo) (list interface{}, total int64, err error) {
+//	var reviewSignList []model.ReviewSign
+//	var signList []model.Sign
+//	limit := pageInfo.PageSize
+//	offset := pageInfo.Page
+//
+//	db := global.DB.Model(&model.ReviewSign{})
+//	if pageInfo.Keyword != nil {
+//		keyWord := pageInfo.Keyword
+//		whereStr := ""
+//		whereArgs := []interface{}{}
+//		for key, val := range keyWord {
+//			whereStr += fmt.Sprintf("%s = ? ", key)
+//			whereArgs = append(whereArgs, val)
+//			if len(whereArgs) != len(keyWord) {
+//				whereStr += "AND "
+//			}
+//		}
+//		db = db.Where(whereStr, whereArgs...)
+//	}
+//
+//	// 获取总数
+//	if err = db.Count(&total).Error; err != nil {
+//		return
+//	}
+//
+//	// 获取ReviewSign列表
+//	if err = db.Limit(limit).Offset(offset).Find(&reviewSignList).Error; err != nil {
+//		return
+//	}
+//
+//	// 获取Sign列表
+//	for _, reviewSign := range reviewSignList {
+//		sign := model.Sign{}
+//		err = global.DB.Debug().Where("id = ?", reviewSign.SignId).Preload("Files").First(&sign).Error
+//		if err != nil {
+//			return
+//		}
+//		signList = append(signList, sign)
+//	}
+//
+//	return signList, total, nil
+//}
+
 func (r *ReviewService) GetReviewList(pageInfo request.PageInfo) (list interface{}, total int64, err error) {
 	var reviewSignList []model.ReviewSign
-	var signList []model.Sign
+	var signList []model.SignWithPhone
 	limit := pageInfo.PageSize
 	offset := pageInfo.Page
 
@@ -223,14 +267,21 @@ func (r *ReviewService) GetReviewList(pageInfo request.PageInfo) (list interface
 
 	// 获取Sign列表
 	for _, reviewSign := range reviewSignList {
-		sign := model.Sign{}
-		err = global.DB.Debug().Where("id = ?", reviewSign.SignId).Preload("Files").First(&sign).Error
+		var signWithPhone model.SignWithPhone
+		err = global.DB.Debug().
+			Table("signs").
+			Select("signs.*, users.phone").
+			Joins("JOIN users ON users.id = signs.user_id").
+			Where("signs.id = ?", reviewSign.SignId).
+			Preload("Files").
+			Scan(&signWithPhone).Error // 使用Scan方法映射到SignWithPhone结构体
 		if err != nil {
 			return
 		}
-		signList = append(signList, sign)
+		//sign := signWithPhone.Sign
+		//sign.Phone = signWithPhone.Phone // 将Phone字段值赋给Sign模型
+		signList = append(signList, signWithPhone)
 	}
-
 	return signList, total, nil
 }
 
@@ -303,50 +354,6 @@ func (r *ReviewService) CreateOrUpdateReport(report model.Report) error {
 
 //func (r *ReviewService) GetReportList(pageInfo request.PageInfo) (list interface{}, total int64, err error) {
 //	var reportList []model.Report
-//	var signList []model.Sign
-//	limit := pageInfo.PageSize
-//	offset := pageInfo.Page
-//
-//	db := global.DB.Model(&model.Report{})
-//	if pageInfo.Keyword != nil {
-//		keyWord := pageInfo.Keyword
-//		whereStr := ""
-//		whereArgs := []interface{}{}
-//		for key, val := range keyWord {
-//			whereStr += fmt.Sprintf("%s = ? ", key)
-//			whereArgs = append(whereArgs, val)
-//			if len(whereArgs) != len(keyWord) {
-//				whereStr += "AND "
-//			}
-//		}
-//		db = db.Where(whereStr, whereArgs...)
-//	}
-//
-//	// 获取总数
-//	if err = db.Count(&total).Error; err != nil {
-//		return
-//	}
-//
-//	// 获取ReviewSign列表
-//	if err = db.Limit(limit).Offset(offset).Find(&reportList).Error; err != nil {
-//		return
-//	}
-//
-//	// 获取Sign列表
-//	for _, report := range reportList {
-//		sign := model.Sign{}
-//		err = global.DB.Debug().Where("id = ?", report.SignId).Preload("Reports").First(&sign).Error
-//		if err != nil {
-//			return
-//		}
-//		signList = append(signList, sign)
-//	}
-//
-//	return signList, total, nil
-//}
-
-//func (r *ReviewService) GetReportList(pageInfo request.PageInfo) (list interface{}, total int64, err error) {
-//	var reportList []model.Report
 //	limit := pageInfo.PageSize
 //	offset := pageInfo.Page
 //
@@ -384,7 +391,7 @@ func (r *ReviewService) CreateOrUpdateReport(report model.Report) error {
 //		if err != nil {
 //			return
 //		}
-//		sign.Reports = []model.Report{report}
+//		sign.Reports = report
 //		signList = append(signList, sign)
 //	}
 //
@@ -395,7 +402,6 @@ func (r *ReviewService) GetReportList(pageInfo request.PageInfo) (list interface
 	var reportList []model.Report
 	limit := pageInfo.PageSize
 	offset := pageInfo.Page
-
 	db := global.DB.Model(&model.Report{})
 	if pageInfo.Keyword != nil {
 		keyWord := pageInfo.Keyword
@@ -410,19 +416,14 @@ func (r *ReviewService) GetReportList(pageInfo request.PageInfo) (list interface
 		}
 		db = db.Where(whereStr, whereArgs...)
 	}
-
-	// 获取总数
 	if err = db.Count(&total).Error; err != nil {
 		return
 	}
-
 	// 获取Report列表
 	if err = db.Limit(limit).Offset(offset).Find(&reportList).Error; err != nil {
 		return
 	}
-
 	signList := []model.Sign{}
-
 	// 获取Sign列表
 	for _, report := range reportList {
 		sign := model.Sign{}
@@ -430,9 +431,23 @@ func (r *ReviewService) GetReportList(pageInfo request.PageInfo) (list interface
 		if err != nil {
 			return
 		}
-		sign.Reports = report
+
+		// 获取用户列表
+		var reportWithUsername model.ReportWithUsername
+		err = global.DB.Table("reports").
+			Select("reports.*, users.username").
+			Joins("LEFT JOIN users ON users.id = reports.report_user_id").
+			Where("reports.id = ?", report.ID).
+			First(&reportWithUsername).Error
+
+		if err != nil {
+			return
+		}
+
+		// 将带有用户名的举报添加到签名
+		sign.ReportWithUsername = reportWithUsername
+
 		signList = append(signList, sign)
 	}
-
 	return signList, total, nil
 }

@@ -83,11 +83,7 @@ func (s *StageService) GetSign(signId int) (model.Sign, error) {
 }
 
 func (s *StageService) GetSignList(pageInfo request.PageInfo) (list interface{}, total int64, err error) {
-	//var signList []model.Sign
-	var signList []struct {
-		model.Sign
-		Username string
-	}
+	var signList []model.SignWithPhone
 	limit := pageInfo.PageSize
 	//offset := pageInfo.PageSize * (pageInfo.Page - 1)
 	offset := pageInfo.Page
@@ -116,17 +112,19 @@ func (s *StageService) GetSignList(pageInfo request.PageInfo) (list interface{},
 		}
 		db = db.Where(whereStr, whereArgs...)
 	}
-	//err = db.
-	//	Debug().
-	//	Preload("Files").
-	//	Select("signs.*, users.username as username").
-	//	Joins("left join users on signs.user_id = users.id").
-	//	Count(&total).
-	//	Limit(limit).
-	//	Offset(offset).
-	//	Scan(&signList).
-	//	Error
-	err = db.Debug().Preload("Files").Select("signs.*, users.username as username").Joins("left join users on signs.user_id = users.id").Count(&total).Limit(limit).Offset(offset).Find(&signList).Error
+	//err = db.Debug().Preload("Files").Select("signs.*, users.phone as phone").Joins("left join users on signs.user_id = users.id").Count(&total).Limit(limit).Offset(offset).Scan(&signList).Error
+	err = db.Debug().Select("signs.*, users.phone as phone").Joins("left join users on signs.user_id = users.id").Limit(limit).Offset(offset).Scan(&signList).Error
+	if err != nil {
+		return
+	}
+	for i := range signList {
+		var files []model.File
+		err = global.DB.Model(&model.File{}).Where("sign_id = ?", signList[i].ID).Find(&files).Error
+		if err != nil {
+			return
+		}
+		signList[i].Files = files
+	}
 	if err != nil {
 		return
 	}
@@ -209,4 +207,25 @@ func (s *StageService) GetStage(currentTime time.Time) (model.CompetitionTime, e
 	var cpTime model.CompetitionTime
 	err := global.DB.Where("end_time > ? and start_time < ?", currentTime, currentTime).First(&cpTime).Error
 	return cpTime, err
+}
+
+func (s *StageService) CheckSignExists(signId uint) (bool, error) {
+	var count int64
+	err := global.DB.Model(&model.Sign{}).Where("id = ?", signId).Count(&count).Error
+	return count > 0, err
+}
+
+func (s *StageService) CheckLikeExists(userID, signId uint) (bool, error) {
+	var count int64
+	err := global.DB.Model(&model.UserLike{}).Where("user_id = ? AND sign_id = ?", userID, signId).Count(&count).Error
+	return count > 0, err
+}
+
+func (s *StageService) CreateLike(userID, signId uint) error {
+	like := model.UserLike{UserID: userID, SignID: signId}
+	return global.DB.Create(&like).Error
+}
+
+func (s *StageService) IncrementLikes(signID int) error {
+	return global.DB.Model(&model.Sign{}).Where("id = ?", signID).Update("likes", gorm.Expr("likes + 1")).Error
 }

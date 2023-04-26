@@ -36,13 +36,13 @@ func (userService *UserService) Login(u *model.User) (userInter *model.User, err
 	}
 
 	var user model.User
-	err = global.DB.Where("username = ?", u.Username).Preload("Authorities").First(&user).Error
+	err = global.DB.Debug().Where("username = ?", u.Username).Preload("Authorities").First(&user).Error
 	if err == nil {
 		if ok := utils.BcryptCheck(u.Password, user.Password); !ok {
 			return nil, errors.New("密码错误")
 		}
 	}
-	return &user, nil
+	return &user, err
 }
 
 // ChangePassword 修改密码
@@ -75,11 +75,11 @@ func (userService *UserService) SetUserInfo(req model.User) error {
 // DeleteUser 删除用户
 func (userService *UserService) DeleteUser(id int) (err error) {
 	var user model.User
-	err = global.DB.Where("id=?", id).Delete(&user).Error
+	err = global.DB.Unscoped().Where("id=?", id).Delete(&user).Error
 	if err != nil {
 		return err
 	}
-	err = global.DB.Delete(&[]model.UseAuthority{}, "user_id=?", id).Error
+	err = global.DB.Unscoped().Delete(&[]model.UseAuthority{}, "user_id=?", id).Error
 	return err
 }
 

@@ -62,7 +62,7 @@ func (b *BaseApi) Register(ctx *gin.Context) {
 	userReturn, err := userService.Register(*user)
 	if err != nil {
 		global.LOG.Error("注册失败!", zap.Error(err))
-		response.FailWithDetailed(Res.UserResponse{User: userReturn}, "注册失败", ctx)
+		response.FailWithMessage(err.Error(), ctx)
 	} else {
 		response.OkWithDetailed(Res.UserResponse{User: userReturn}, "注册成功", ctx)
 		//b.tokenNext(ctx, *user)

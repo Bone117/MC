@@ -37,7 +37,7 @@ func (s *StageApi) Sign(ctx *gin.Context) {
 		UserId:         utils.GetUserID(ctx),
 		WorkName:       signReq.WorkName,
 		WorkFileTypeId: signReq.WorkFileTypeId,
-		Author:         signReq.Author,
+		NickName:       signReq.NickName,
 		Username:       signReq.Username,
 		WorkSoftware:   signReq.WorkSoftware,
 		OtherAuthor:    signReq.OtherAuthor,
@@ -62,9 +62,6 @@ func (s *StageApi) Sign(ctx *gin.Context) {
 func (s *StageApi) UpdateSign(ctx *gin.Context) {
 	signR := model.Sign{}
 	_ = ctx.ShouldBindJSON(&signR)
-	if err := utils.Verify(signR, utils.IdVerify); err != nil {
-		response.FailWithMessage(err.Error(), ctx)
-	}
 	sign := &model.Sign{MODEL: global.MODEL{ID: signR.ID}, WorkName: signR.WorkName, WorkFileTypeId: signR.WorkFileTypeId,
 		OtherAuthor: signR.OtherAuthor, WorkAdviser: signR.WorkAdviser, WorkSoftware: signR.WorkSoftware,
 		WorkDesc: signR.WorkDesc, Status: signR.Status, RejReason: signR.RejReason}
@@ -116,6 +113,43 @@ func (s *StageApi) GetSignList(ctx *gin.Context) {
 			PageSize: pageInfo.PageSize,
 		}, "获取报名列表成功", ctx)
 	}
+}
+
+func (s *StageApi) Like(ctx *gin.Context) {
+	signID, _ := strconv.Atoi(ctx.Param("id"))
+	userID := utils.GetUserID(ctx)
+	signExists, err := stageService.CheckSignExists(uint(signID))
+	if err != nil {
+		response.FailWithMessage("点赞失败，请稍后再试", ctx)
+		return
+	}
+	if !signExists {
+		global.LOG.Error("点赞失败，sign不存在")
+		response.FailWithMessage("点赞失败，请稍后再试", ctx)
+		return
+	}
+	likeExists, err := stageService.CheckLikeExists(userID, uint(signID))
+	if err != nil {
+		response.FailWithMessage("点赞失败，请稍后再试", ctx)
+		return
+	}
+	if likeExists {
+		response.FailWithMessage("您已经点过赞了", ctx)
+		return
+	}
+	err = stageService.CreateLike(userID, uint(signID))
+	if err != nil {
+		global.LOG.Error("创建点赞记录失败!", zap.Error(err))
+		response.FailWithMessage("点赞失败，请稍后再试", ctx)
+		return
+	}
+	// 更新 Sign 记录的 likes 字段
+	if err = stageService.IncrementLikes(signID); err != nil {
+		global.LOG.Error("更新点赞数失败!", zap.Error(err))
+		response.FailWithMessage("点赞失败", ctx)
+		return
+	}
+	response.OkWithMessage("点赞成功", ctx)
 }
 
 // UploadFile
