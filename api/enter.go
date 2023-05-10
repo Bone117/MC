@@ -9,6 +9,7 @@ type ApiGroup struct {
 	StageApi
 	PeriodApi
 	ReviewApi
+	PortfolioApi
 }
 
 var (
@@ -17,6 +18,7 @@ var (
 	casbinService    = service.ServiceGroupApp.CasbinService
 	noticeService    = service.ServiceGroupApp.NoticeService
 	stageService     = service.ServiceGroupApp.StageService
+	portfolioService = service.ServiceGroupApp.PortfolioService
 	periodService    = service.ServiceGroupApp.PeriodService
 	reviewService    = service.ServiceGroupApp.ReviewService
 )

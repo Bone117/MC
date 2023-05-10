@@ -20,6 +20,7 @@ func (n *NoticeApi) CreateNotice(ctx *gin.Context) {
 	_ = ctx.ShouldBindJSON(&noticeR)
 	if err := utils.Verify(noticeR, utils.NoticeVerify); err != nil {
 		response.FailWithMessage(err.Error(), ctx)
+		return
 	}
 	notice := &model.Notice{Title: noticeR.Title, Desc: noticeR.Desc, Content: noticeR.Content}
 	id, err := noticeService.CreateNotice(*notice)

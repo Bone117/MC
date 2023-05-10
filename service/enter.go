@@ -8,6 +8,7 @@ type ServiceGroup struct {
 	StageService
 	PeriodService
 	ReviewService
+	PortfolioService
 }
 
 var ServiceGroupApp = new(ServiceGroup)

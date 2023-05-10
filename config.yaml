@@ -24,8 +24,6 @@ jwt:
 local:
   path: uploads/file
   store-path: uploads/file
-casbin:
-  model-path: './model/rbac_model.conf'
 
 mysql:
   path: 127.0.0.1

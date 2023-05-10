@@ -224,6 +224,15 @@ func RegisterTables(db *gorm.DB) {
 		os.Exit(0)
 	}
 
+	// 作品集锦表初始化
+	err = db.AutoMigrate(
+		model.Portfolio{},
+	)
+	if err != nil {
+		global.LOG.Error("register Portfolio table failed", zap.Error(err))
+		os.Exit(0)
+	}
+
 	// 点赞表
 	err = db.AutoMigrate(
 		model.UserLike{},

@@ -23,6 +23,7 @@ func Routers() *gin.Engine {
 	{
 		systemRouter.InitBaseRouter(PublicGroup)
 		systemRouter.InitNoticeRouter(PublicGroup)
+		systemRouter.InitPortfolioRouter(PublicGroup) // 注册优秀作品路由
 	}
 	PrivateGroup := Router.Group("")
 	PrivateGroup.Use(middleware.JWTAuth()).Use(middleware.CasbinHandler())

@@ -33,6 +33,11 @@ func (s *StageApi) Sign(ctx *gin.Context) {
 		response.FailWithMessage("比赛暂未开始", ctx)
 		return
 	}
+	if period.StageID != 1 {
+		global.LOG.Error("报名时间已过!", zap.Error(err))
+		response.FailWithMessage("报名时间已过!", ctx)
+		return
+	}
 	sign := &model.Sign{
 		UserId:         utils.GetUserID(ctx),
 		WorkName:       signReq.WorkName,
