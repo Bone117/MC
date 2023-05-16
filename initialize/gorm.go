@@ -183,11 +183,12 @@ func RegisterTables(db *gorm.DB) {
 			{WorkFileTypeName: "课件类"},
 			{WorkFileTypeName: "DV类"},
 			{WorkFileTypeName: "动画类"},
-			{WorkFileTypeName: "平面类"},
+			{WorkFileTypeName: "平面(含摄影)"},
 			{WorkFileTypeName: "微课"},
 			{WorkFileTypeName: "移动应用"},
-			{WorkFileTypeName: "创客"},
-			{WorkFileTypeName: "展板或空间设计"},
+			{WorkFileTypeName: "创客(含3Done科创专项)"},
+			{WorkFileTypeName: "VR/AR/Game教育应用"},
+			{WorkFileTypeName: "竞赛展板/DV花絮/专业宣传片"},
 		}
 		if err = global.DB.Create(&workFileTypeEntities).Error; err != nil {
 			global.LOG.Error("initialize WorkFileType table failed", zap.Error(err))

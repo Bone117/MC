@@ -33,7 +33,7 @@ func (s *StageApi) Sign(ctx *gin.Context) {
 		response.FailWithMessage("比赛暂未开始", ctx)
 		return
 	}
-	if period.StageID != 1 {
+	if period.StageID >= 3 {
 		global.LOG.Error("报名时间已过!", zap.Error(err))
 		response.FailWithMessage("报名时间已过!", ctx)
 		return
@@ -60,6 +60,16 @@ func (s *StageApi) Sign(ctx *gin.Context) {
 		response.FailWithMessage("报名失败"+err.Error(), ctx)
 	} else {
 		response.OkWithMessage("报名成功", ctx)
+	}
+
+}
+
+func (s *StageApi) GetWorkFileType(ctx *gin.Context) {
+	if workFileTypes, err := stageService.GetWorkFileType(); err != nil {
+		global.LOG.Error("获取作品类别失败!", zap.Error(err))
+		response.FailWithMessage("获取作品类别失败"+err.Error(), ctx)
+	} else {
+		response.OkWithDetailed(workFileTypes, "获取作品类别成功", ctx)
 	}
 
 }

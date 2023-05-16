@@ -16,7 +16,7 @@ func CheckStage() gin.HandlerFunc {
 	return func(context *gin.Context) {
 		userid := utils.GetUserID(context)
 		var authority int
-		err := global.DB.Debug().Table("user_authority").Select("authority_authority_id").Where("user_id = ?", userid).Scan(&authority).Error
+		err := global.DB.Table("user_authority").Select("authority_authority_id").Where("user_id = ?", userid).Scan(&authority).Error
 		if err != nil {
 			global.LOG.Error("获取权限出错!", zap.Error(err))
 			context.Abort()
@@ -29,7 +29,7 @@ func CheckStage() gin.HandlerFunc {
 
 		var stage int
 		now := time.Now()
-		err = global.DB.Debug().Table("competition_times").Select("stage_id").Where("start_time < ? AND end_time > ? AND deleted_at IS NULL", now, now).Scan(&stage).Error
+		err = global.DB.Table("competition_times").Select("stage_id").Where("start_time < ? AND end_time > ? AND deleted_at IS NULL", now, now).Scan(&stage).Error
 		if err != nil {
 			global.LOG.Error("获取届次信息失败!", zap.Error(err))
 			context.Abort()

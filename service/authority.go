@@ -30,7 +30,7 @@ func (authorityService *AuthorityService) UpdateAuthority(auth model.Authority) 
 }
 
 func (authorityService *AuthorityService) DeleteAuthority(auth *model.Authority) (err error) {
-	if errors.Is(global.DB.Debug().Preload("Users").First(&auth).Error, gorm.ErrRecordNotFound) {
+	if errors.Is(global.DB.Preload("Users").First(&auth).Error, gorm.ErrRecordNotFound) {
 		return errors.New("该角色不存在")
 	}
 	if len(auth.Users) != 0 {
@@ -39,7 +39,7 @@ func (authorityService *AuthorityService) DeleteAuthority(auth *model.Authority)
 	if !errors.Is(global.DB.Where("authority_id = ?", auth.AuthorityId).First(&model.User{}).Error, gorm.ErrRecordNotFound) {
 		return errors.New("此角色有用户正在使用禁止删除")
 	}
-	err = global.DB.Debug().Delete(&[]model.UseAuthority{}, "authority_authority_id=?", auth.AuthorityId).Error
+	err = global.DB.Delete(&[]model.UseAuthority{}, "authority_authority_id=?", auth.AuthorityId).Error
 	ServiceGroupApp.CasbinService.ClearCasbin(0, auth.AuthorityId)
 	return err
 }

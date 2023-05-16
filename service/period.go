@@ -13,7 +13,7 @@ type PeriodService struct {
 func (s *PeriodService) CreatePeriod(period model.CompetitionTime) error {
 	newPeriod := model.CompetitionTime{StartTime: period.StartTime, EndTime: period.EndTime}
 	t := model.CompetitionTime{Period: period.Period, StageID: period.StageID}
-	result := global.DB.Debug().FirstOrCreate(&period, t)
+	result := global.DB.FirstOrCreate(&period, t)
 	if result.Error != nil {
 		return result.Error
 	}
@@ -21,7 +21,7 @@ func (s *PeriodService) CreatePeriod(period model.CompetitionTime) error {
 		// 记录已创建
 	} else {
 		// 记录已存在，更新所有字段
-		err := global.DB.Debug().Model(&period).Updates(newPeriod).Error
+		err := global.DB.Model(&period).Updates(newPeriod).Error
 		if err != nil {
 			return err
 		}
@@ -60,9 +60,9 @@ func (s *PeriodService) GetPeriodList(pageInfo request.PageInfo) (list interface
 				whereStr += "AND "
 			}
 		}
-		err = db.Debug().Limit(limit).Offset(offset).Where(whereStr, whereArgs...).Find(&periodList).Statement.Error
+		err = db.Limit(limit).Offset(offset).Where(whereStr, whereArgs...).Find(&periodList).Statement.Error
 	} else {
-		err = db.Debug().Limit(limit).Offset(offset).Find(&periodList).Error
+		err = db.Limit(limit).Offset(offset).Find(&periodList).Error
 	}
 
 	return periodList, total, err

@@ -23,6 +23,7 @@ func (s *StageRouter) InitStageRouter(Router *gin.RouterGroup) {
 		stageRouter.POST("upload", stageApi.UploadFile).Use(middleware.CheckStage())
 		stageRouter.POST("deleteFile", stageApi.DeleteFile).Use(middleware.CheckStage())
 		stageRouter.GET("getFile", stageApi.GetFile)
+		stageRouter.GET("getWorkFileType", stageApi.GetWorkFileType)
 
 		stageRouter.POST("/sign/:id/like", stageApi.Like)
 	}

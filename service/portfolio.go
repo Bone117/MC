@@ -40,7 +40,7 @@ func (p *PortfolioService) GetPortfolioList(pageInfo request.PageInfo) (list int
 				whereStr += "AND "
 			}
 		}
-		err = db.Debug().Limit(limit).Offset(offset).Order("created_at DESC").Where(whereStr, whereArgs...).Find(&portfolioList).Statement.Error
+		err = db.Limit(limit).Offset(offset).Order("created_at DESC").Where(whereStr, whereArgs...).Find(&portfolioList).Statement.Error
 	} else {
 		err = db.Limit(limit).Offset(offset).Order("created_at DESC").Find(&portfolioList).Error
 	}

@@ -26,24 +26,6 @@ func (s *StageService) Sign(sign model.Sign, gra model.Grade) error {
 			}
 		}
 	}
-
-	// 班级表
-	//grade := model.Grade{GradeName: gra.GradeName, MajorId: gra.MajorId, UserId: gra.UserId}
-	//rowAffected := global.DB.Where("grade_name = ? And major_id = ?", mg.GradeName, mg.MajorId).First(&grade).RowsAffected
-	//if rowAffected == 0 {
-	//	err := global.DB.Create(&grade).Error
-	//	if err != nil {
-	//		return errors.New("grade create failed")
-	//	}
-	//}
-	//// 学生表
-	//rowAffected = global.DB.Where("grade_name = ? And user_id = ?", mg.GradeName, mg.UserId).First(&mg).RowsAffected
-	//if rowAffected == 0 {
-	//	err := global.DB.Create(&mg).Error
-	//	if err != nil {
-	//		return errors.New("student create failed")
-	//	}
-	//}
 	// 报名表
 	var count int64
 	//global.DB.Model(&model.Sign{}).Where("user_id = ?", sign.UserId).Count(&count)
@@ -52,7 +34,7 @@ func (s *StageService) Sign(sign model.Sign, gra model.Grade) error {
 		Joins("inner join authorities on authority_id = user_authority.authority_authority_id").
 		Where("authority_id = ?", 777).Select("1")
 
-	global.DB.Model(&model.Sign{}).Debug().
+	global.DB.Model(&model.Sign{}).
 		Where("user_id = ? AND jie_ci_id = ?", sign.UserId, sign.JieCiId).
 		Where("NOT EXISTS (?)", subQuery).
 		Count(&count)
@@ -69,11 +51,11 @@ func (s *StageService) DeleteSign(id int) error {
 }
 
 func (s *StageService) UpdateSign(signR model.Sign) error {
-	return global.DB.Debug().Updates(&signR).Error
+	return global.DB.Updates(&signR).Error
 }
 
 func (s *StageService) UpdateSignCoverUrl(signID uint, coverUrl string) error {
-	return global.DB.Debug().Model(&model.Sign{}).Where("id = ?", signID).Update("cover_url", coverUrl).Error
+	return global.DB.Model(&model.Sign{}).Where("id = ?", signID).Update("cover_url", coverUrl).Error
 }
 
 func (s *StageService) GetSign(signId int) (model.Sign, error) {
@@ -82,16 +64,23 @@ func (s *StageService) GetSign(signId int) (model.Sign, error) {
 	return sign, err
 }
 
+func (s *StageService) GetWorkFileType() ([]model.WorkFileType, error) {
+	var workFileTypes []model.WorkFileType
+	if err := global.DB.Find(&workFileTypes).Error; err != nil {
+		return nil, err
+	}
+	return workFileTypes, nil
+}
+
 func (s *StageService) GetSignList(pageInfo request.PageInfo) (list interface{}, total int64, err error) {
 	var signList []model.SignWithPhone
 	limit := pageInfo.PageSize
-	//offset := pageInfo.PageSize * (pageInfo.Page - 1)
 	offset := pageInfo.Page
 	db := global.DB.Model(&model.Sign{})
-	err = db.Count(&total).Error
-	if err != nil {
-		return
-	}
+	//err = db.Count(&total).Error
+	//if err != nil {
+	//	return
+	//}
 	// 返回用户名
 	// 关联查询
 	if pageInfo.Keyword != nil {
@@ -112,8 +101,7 @@ func (s *StageService) GetSignList(pageInfo request.PageInfo) (list interface{},
 		}
 		db = db.Where(whereStr, whereArgs...)
 	}
-	//err = db.Debug().Preload("Files").Select("signs.*, users.phone as phone").Joins("left join users on signs.user_id = users.id").Count(&total).Limit(limit).Offset(offset).Scan(&signList).Error
-	err = db.Debug().Select("signs.*, users.phone as phone").Joins("left join users on signs.user_id = users.id").Limit(limit).Offset(offset).Scan(&signList).Error
+	err = db.Select("signs.*, users.phone as phone").Joins("left join users on signs.user_id = users.id").Limit(limit).Offset(offset).Scan(&signList).Error
 	if err != nil {
 		return
 	}
@@ -128,7 +116,7 @@ func (s *StageService) GetSignList(pageInfo request.PageInfo) (list interface{},
 	if err != nil {
 		return
 	}
-	return signList, total, err
+	return signList, int64(len(signList)), err
 }
 
 func (s StageService) GetGrade(gradeName string) (uint, error) {

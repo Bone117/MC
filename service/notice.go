@@ -51,7 +51,7 @@ func (n NoticeService) GetNoticeList(pageInfo request.PageInfo) (list interface{
 				whereStr += "AND "
 			}
 		}
-		err = db.Debug().Limit(limit).Offset(offset).Order("created_at DESC").Where(whereStr, whereArgs...).Find(&noticeList).Statement.Error
+		err = db.Limit(limit).Offset(offset).Order("created_at DESC").Where(whereStr, whereArgs...).Find(&noticeList).Statement.Error
 	} else {
 		err = db.Limit(limit).Offset(offset).Order("created_at DESC").Find(&noticeList).Error
 	}

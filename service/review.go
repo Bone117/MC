@@ -41,13 +41,13 @@ func (r *ReviewService) CreateOrUpdateReviews(reviews []*model.ReviewSign, signI
 		// 删除传入的SignId和UserId组合之外的记录
 		if len(userIds) == 0 {
 			// 当userIds为空时，删除所有userId对应的数据
-			err := tx.Unscoped().Debug().Where("sign_id IN (?)", signIds).Delete(&model.ReviewSign{}).Error
+			err := tx.Unscoped().Where("sign_id IN (?)", signIds).Delete(&model.ReviewSign{}).Error
 			if err != nil {
 				return err
 			}
 		} else {
 			// 当userIds非空时，按照原逻辑处理
-			err := tx.Unscoped().Debug().Where("sign_id IN (?)", signIds).Not("review_user_id IN (?)", userIds).Delete(&model.ReviewSign{}).Error
+			err := tx.Unscoped().Where("sign_id IN (?)", signIds).Not("review_user_id IN (?)", userIds).Delete(&model.ReviewSign{}).Error
 			if err != nil {
 				return err
 			}
@@ -89,13 +89,13 @@ func (r *ReviewService) CreateOrUpdateEvaluates(evaluates []*model.Evaluate, sig
 		// 删除传入的SignId和UserId组合之外的记录
 		if len(userIds) == 0 {
 			// 当userIds为空时，删除所有userId对应的数据
-			err := tx.Unscoped().Debug().Where("sign_id IN (?)", signIds).Delete(&model.Evaluate{}).Error
+			err := tx.Unscoped().Where("sign_id IN (?)", signIds).Delete(&model.Evaluate{}).Error
 			if err != nil {
 				return err
 			}
 		} else {
 			// 当userIds非空时，按照原逻辑处理
-			err := tx.Unscoped().Debug().Where("sign_id IN (?)", signIds).Not("evaluate_user_id IN (?)", userIds).Delete(&model.Evaluate{}).Error
+			err := tx.Unscoped().Where("sign_id IN (?)", signIds).Not("evaluate_user_id IN (?)", userIds).Delete(&model.Evaluate{}).Error
 			if err != nil {
 				return err
 			}
@@ -268,7 +268,7 @@ func (r *ReviewService) GetReviewList(pageInfo request.PageInfo) (list interface
 	// 获取Sign列表
 	for _, reviewSign := range reviewSignList {
 		var signWithPhone model.SignWithPhone
-		err = global.DB.Debug().
+		err = global.DB.
 			Table("signs").
 			Select("signs.*, users.phone").
 			Joins("JOIN users ON users.id = signs.user_id").
@@ -324,7 +324,7 @@ func (r *ReviewService) GetEvaluateList(pageInfo request.PageInfo, userID uint) 
 	// 获取Sign列表
 	for _, reviewSign := range EvaluateList {
 		sign := model.Sign{}
-		err = global.DB.Debug().Where("id = ?", reviewSign.SignId).Preload("Files").Preload("Evaluates", "evaluate_user_id = ?", userID).First(&sign).Error
+		err = global.DB.Where("id = ?", reviewSign.SignId).Preload("Files").Preload("Evaluates", "evaluate_user_id = ?", userID).First(&sign).Error
 		if err != nil {
 			return
 		}
@@ -427,7 +427,7 @@ func (r *ReviewService) GetReportList(pageInfo request.PageInfo) (list interface
 	// 获取Sign列表
 	for _, report := range reportList {
 		sign := model.Sign{}
-		err = global.DB.Debug().Where("id = ?", report.SignId).First(&sign).Error
+		err = global.DB.Where("id = ?", report.SignId).First(&sign).Error
 		if err != nil {
 			return
 		}

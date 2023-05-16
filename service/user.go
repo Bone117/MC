@@ -36,7 +36,7 @@ func (userService *UserService) Login(u *model.User) (userInter *model.User, err
 	}
 
 	var user model.User
-	err = global.DB.Debug().Where("username = ?", u.Username).Preload("Authorities").First(&user).Error
+	err = global.DB.Where("username = ?", u.Username).Preload("Authorities").First(&user).Error
 	if err == nil {
 		if ok := utils.BcryptCheck(u.Password, user.Password); !ok {
 			return nil, errors.New("密码错误")
@@ -105,7 +105,7 @@ func (userService *UserService) SetUserAuthorities(id uint, authorityIds []strin
 
 func (userService UserService) GetUserInfo(uuid uuid.UUID) (user model.User, err error) {
 	var reqUser model.User
-	err = global.DB.Debug().Preload("Authorities").First(&reqUser, "uuid = ?", uuid).Error
+	err = global.DB.Preload("Authorities").First(&reqUser, "uuid = ?", uuid).Error
 	return reqUser, err
 }
 
@@ -122,7 +122,7 @@ func (userService UserService) GetUserInfoByKeys(keyInfo map[string]interface{})
 			whereStr += "AND "
 		}
 	}
-	err = global.DB.Debug().Where(whereStr, whereArgs...).Preload("Authorities").First(&reqUser).Error
+	err = global.DB.Where(whereStr, whereArgs...).Preload("Authorities").First(&reqUser).Error
 	return reqUser, err
 }
 
@@ -153,9 +153,9 @@ func (userService *UserService) GetUserInfoList(pageInfo request.PageInfo) (list
 				whereStr += "AND "
 			}
 		}
-		err = db.Debug().Limit(limit).Offset(offset).Where(whereStr, whereArgs...).Preload("Authorities").Find(&userList).Statement.Error
+		err = db.Limit(limit).Offset(offset).Where(whereStr, whereArgs...).Preload("Authorities").Find(&userList).Statement.Error
 	} else {
-		err = db.Debug().Limit(limit).Offset(offset).Preload("Authorities").Find(&userList).Error
+		err = db.Limit(limit).Offset(offset).Preload("Authorities").Find(&userList).Error
 	}
 	return userList, total, err
 }
