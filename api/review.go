@@ -26,11 +26,13 @@ func (r *ReviewApi) CreateReview(ctx *gin.Context) {
 
 	var reviewSigns []*model.ReviewSign
 
+	period, err := stageService.GetJieCi()
+
 	for _, signId := range reviewR.SignId {
 		for _, userId := range reviewR.UserId {
 			// 为每个评委和作品创建一个新的评估记录
 			reviewSign := &model.ReviewSign{
-				JieCiId:      reviewR.JieCiId,
+				JieCiId:      period.Period,
 				ReviewUserId: userId,
 				SignId:       signId,
 			}

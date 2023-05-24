@@ -271,6 +271,20 @@ func (s *StageApi) GetFile(ctx *gin.Context) {
 	}
 }
 
+func (s *StageApi) GetUploadedFiles(ctx *gin.Context) {
+	signId := request.GetById{}
+	_ = ctx.ShouldBindQuery(&signId)
+	keyWords := map[string]interface{}{
+		"sign_id": signId.ID,
+	}
+	if fileList, err := stageService.GetFileList(keyWords); err != nil {
+		global.LOG.Error("文件信息获取失败!", zap.Error(err))
+		response.FailWithDetailed(fileList, "文件信息获取失败", ctx)
+	} else {
+		response.OkWithDetailed(fileList, "文件信息获取成功", ctx)
+	}
+}
+
 func (s *StageApi) DeleteFile(ctx *gin.Context) {
 	fileR := Req.GetFileRequest{}
 	err := ctx.ShouldBindJSON(&fileR)

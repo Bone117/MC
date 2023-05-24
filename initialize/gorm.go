@@ -208,7 +208,7 @@ func RegisterTables(db *gorm.DB) {
 		fileTypeEntities := []model.FileType{
 			{FileTypeName: "源文件"},
 			{FileTypeName: "运行文件"},
-			{FileTypeName: "演示文件"},
+			{FileTypeName: "演示视频"},
 		}
 		if err = global.DB.Create(&fileTypeEntities).Error; err != nil {
 			global.LOG.Error("initialize FileType table failed", zap.Error(err))

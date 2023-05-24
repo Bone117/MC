@@ -72,17 +72,60 @@ func (s *StageService) GetWorkFileType() ([]model.WorkFileType, error) {
 	return workFileTypes, nil
 }
 
+//func (s *StageService) GetSignList(pageInfo request.PageInfo) (list interface{}, total int64, err error) {
+//	var signList []model.SignWithPhone
+//	limit := pageInfo.PageSize
+//	offset := pageInfo.Page
+//	db := global.DB.Model(&model.Sign{})
+//	err = db.Count(&total).Error
+//	if err != nil {
+//		return
+//	}
+//	// 返回用户名
+//	// 关联查询
+//	if pageInfo.Keyword != nil {
+//		keyWord := pageInfo.Keyword
+//		whereStr := ""
+//		whereArgs := []interface{}{}
+//		for key, val := range keyWord {
+//			fieldName := strcase.ToSnake(key) // 将小驼峰命名转换为下划线命名
+//			// 将数字类型的值转换为uint类型
+//			if v, ok := val.(float64); ok {
+//				val = uint(v)
+//			}
+//			whereStr += fmt.Sprintf("%s = ? ", fieldName)
+//			whereArgs = append(whereArgs, val)
+//			if len(whereArgs) != len(keyWord) {
+//				whereStr += "AND "
+//			}
+//		}
+//		db = db.Where(whereStr, whereArgs...)
+//	}
+//	err = db.Select("signs.*, users.phone as phone").Joins("left join users on signs.user_id = users.id").Limit(limit).Offset(offset).Scan(&signList).Error
+//	if err != nil {
+//		return
+//	}
+//	for i := range signList {
+//		var files []model.File
+//		err = global.DB.Model(&model.File{}).Where("sign_id = ?", signList[i].ID).Find(&files).Error
+//		if err != nil {
+//			return
+//		}
+//		signList[i].Files = files
+//	}
+//	if err != nil {
+//		return
+//	}
+//	return signList, total, err
+//}
+
 func (s *StageService) GetSignList(pageInfo request.PageInfo) (list interface{}, total int64, err error) {
 	var signList []model.SignWithPhone
 	limit := pageInfo.PageSize
 	offset := pageInfo.Page
 	db := global.DB.Model(&model.Sign{})
-	//err = db.Count(&total).Error
-	//if err != nil {
-	//	return
-	//}
-	// 返回用户名
-	// 关联查询
+
+	// 先判断是否需要关键词搜索
 	if pageInfo.Keyword != nil {
 		keyWord := pageInfo.Keyword
 		whereStr := ""
@@ -93,6 +136,12 @@ func (s *StageService) GetSignList(pageInfo request.PageInfo) (list interface{},
 			if v, ok := val.(float64); ok {
 				val = uint(v)
 			}
+			switch fieldName {
+			case "username":
+				fieldName = "signs." + fieldName
+			default:
+				fieldName = "signs." + fieldName // 如果所有的字段都在 signs 表中，你也可以删除这个 switch 结构，直接添加前缀。
+			}
 			whereStr += fmt.Sprintf("%s = ? ", fieldName)
 			whereArgs = append(whereArgs, val)
 			if len(whereArgs) != len(keyWord) {
@@ -101,6 +150,14 @@ func (s *StageService) GetSignList(pageInfo request.PageInfo) (list interface{},
 		}
 		db = db.Where(whereStr, whereArgs...)
 	}
+
+	// 计数操作
+	err = db.Count(&total).Error
+	if err != nil {
+		return
+	}
+
+	// 执行查询
 	err = db.Select("signs.*, users.phone as phone").Joins("left join users on signs.user_id = users.id").Limit(limit).Offset(offset).Scan(&signList).Error
 	if err != nil {
 		return
@@ -113,10 +170,7 @@ func (s *StageService) GetSignList(pageInfo request.PageInfo) (list interface{},
 		}
 		signList[i].Files = files
 	}
-	if err != nil {
-		return
-	}
-	return signList, int64(len(signList)), err
+	return signList, total, err
 }
 
 func (s StageService) GetGrade(gradeName string) (uint, error) {
@@ -170,9 +224,8 @@ func (s *StageService) GetFile(keyWords map[string]interface{}) (model.File, err
 	return file, err
 }
 
-// GetFileList TODO 需修改
-func (s *StageService) GetFileList(keyWords map[string]interface{}) (model.File, error) {
-	var file model.File
+func (s *StageService) GetFileList(keyWords map[string]interface{}) ([]model.File, error) {
+	var fileList []model.File
 	whereStr := ""
 	whereArgs := []interface{}{}
 	for key, val := range keyWords {
@@ -187,8 +240,8 @@ func (s *StageService) GetFileList(keyWords map[string]interface{}) (model.File,
 			whereStr += "AND "
 		}
 	}
-	err := global.DB.Where(whereStr, whereArgs...).First(&file).Error
-	return file, err
+	err := global.DB.Where(whereStr, whereArgs...).Find(&fileList).Error
+	return fileList, err
 }
 
 func (s *StageService) GetStage(currentTime time.Time) (model.CompetitionTime, error) {
