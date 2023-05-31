@@ -74,6 +74,16 @@ func (s *StageApi) GetWorkFileType(ctx *gin.Context) {
 
 }
 
+func (s *StageApi) GetMajor(ctx *gin.Context) {
+	if workFileTypes, err := stageService.GetMajor(); err != nil {
+		global.LOG.Error("获取专业失败!", zap.Error(err))
+		response.FailWithMessage("获取专业失败"+err.Error(), ctx)
+	} else {
+		response.OkWithDetailed(workFileTypes, "获取专业成功", ctx)
+	}
+
+}
+
 func (s *StageApi) UpdateSign(ctx *gin.Context) {
 	signR := model.Sign{}
 	_ = ctx.ShouldBindJSON(&signR)
@@ -127,6 +137,18 @@ func (s *StageApi) GetSignList(ctx *gin.Context) {
 			Page:     pageInfo.Page,
 			PageSize: pageInfo.PageSize,
 		}, "获取报名列表成功", ctx)
+	}
+}
+
+func (s *StageApi) GetSignEvaluate(ctx *gin.Context) {
+	var reqId request.GetById
+	_ = ctx.ShouldBindQuery(&reqId)
+	userId := utils.GetUserID(ctx)
+	if sign, err := stageService.GetSignEvaluate(reqId.ID, userId); err != nil {
+		global.LOG.Error("分数信息获取失败!", zap.Error(err))
+		response.FailWithDetailed(sign, "评价信息获取失败", ctx)
+	} else {
+		response.OkWithDetailed(sign, "评价信息获取成功", ctx)
 	}
 }
 
@@ -231,6 +253,18 @@ func (s *StageApi) UploadFile(ctx *gin.Context) {
 			FileTypeID: uint(fileTypeID),
 			SignId:     uint(signID),
 		}
+		sign := &model.Sign{MODEL: global.MODEL{ID: uint(signID)}, Status: 10}
+		//updateData := map[string]interface{}{
+		//	"id":     signID,
+		//	"status": 0,
+		//}
+		if err = stageService.UpdateSign(*sign); err != nil {
+			global.LOG.Error("upload file update sign failed！")
+			return
+		} else {
+			global.LOG.Info("upload file update sign success")
+		}
+
 	} else {
 		filePath, uploadErr := utils.UploadFile(header, userid, period.Period) // 文件上传后拿到文件路径
 		if uploadErr != nil {

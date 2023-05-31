@@ -22,3 +22,7 @@ type UpdateSignRequest struct {
 	WorkSoftware   string `json:"workSoftware"`          // 平台
 	WorkDesc       string `json:"workDesc"`              // 作品简介
 }
+
+type SignEvaluateRequest struct {
+	SignId string `json:"signId"`
+}

@@ -35,6 +35,17 @@ func (r *ReviewService) CreateReviews(reviews []*model.ReviewSign, signIds []uin
 	})
 }
 
+//func (r *ReviewService) UpdateSignStatusByID(id uint,status uint) error {
+//	err := global.DB.Model(&model.Sign{}).
+//		Where("id = ?", id).
+//		Updates(map[string]interface{}{"status": status}).Error
+//	if err != nil {
+//		return err
+//	}
+//
+//	return nil
+//}
+
 func (r *ReviewService) CreateOrUpdateReviews(reviews []*model.ReviewSign, signIds []uint, userIds []uint) error {
 	// 使用事务处理批量创建或更新操作
 	return global.DB.Transaction(func(tx *gorm.DB) error {
@@ -95,7 +106,7 @@ func (r *ReviewService) CreateOrUpdateEvaluates(evaluates []*model.Evaluate, sig
 			}
 		} else {
 			// 当userIds非空时，按照原逻辑处理
-			err := tx.Unscoped().Where("sign_id IN (?)", signIds).Not("evaluate_user_id IN (?)", userIds).Delete(&model.Evaluate{}).Error
+			err := tx.Debug().Unscoped().Where("sign_id IN (?)", signIds).Not("evaluate_user_id IN (?)", userIds).Delete(&model.Evaluate{}).Error
 			if err != nil {
 				return err
 			}
@@ -181,7 +192,7 @@ func (r *ReviewService) UpdateEvaluate(evaluate model.Evaluate) error {
 	}
 
 	// 更新Evaluate
-	if err := tx.Debug().Model(&model.Evaluate{}).Where("evaluate_user_id = ? AND sign_id = ?", evaluate.EvaluateUserId, evaluate.SignId).Updates(&evaluate).Omit("jie_ci_id").Error; err != nil {
+	if err := tx.Model(&model.Evaluate{}).Where("evaluate_user_id = ? AND sign_id = ?", evaluate.EvaluateUserId, evaluate.SignId).Updates(&evaluate).Omit("jie_ci_id").Error; err != nil {
 		tx.Rollback() // 出错时回滚事务
 		return err
 	}
@@ -189,50 +200,6 @@ func (r *ReviewService) UpdateEvaluate(evaluate model.Evaluate) error {
 	// 提交事务
 	return tx.Commit().Error
 }
-
-//func (r *ReviewService) GetReviewList(pageInfo request.PageInfo) (list interface{}, total int64, err error) {
-//	var reviewSignList []model.ReviewSign
-//	var signList []model.Sign
-//	limit := pageInfo.PageSize
-//	offset := pageInfo.Page
-//
-//	db := global.DB.Model(&model.ReviewSign{})
-//	if pageInfo.Keyword != nil {
-//		keyWord := pageInfo.Keyword
-//		whereStr := ""
-//		whereArgs := []interface{}{}
-//		for key, val := range keyWord {
-//			whereStr += fmt.Sprintf("%s = ? ", key)
-//			whereArgs = append(whereArgs, val)
-//			if len(whereArgs) != len(keyWord) {
-//				whereStr += "AND "
-//			}
-//		}
-//		db = db.Where(whereStr, whereArgs...)
-//	}
-//
-//	// 获取总数
-//	if err = db.Count(&total).Error; err != nil {
-//		return
-//	}
-//
-//	// 获取ReviewSign列表
-//	if err = db.Limit(limit).Offset(offset).Find(&reviewSignList).Error; err != nil {
-//		return
-//	}
-//
-//	// 获取Sign列表
-//	for _, reviewSign := range reviewSignList {
-//		sign := model.Sign{}
-//		err = global.DB.Debug().Where("id = ?", reviewSign.SignId).Preload("Files").First(&sign).Error
-//		if err != nil {
-//			return
-//		}
-//		signList = append(signList, sign)
-//	}
-//
-//	return signList, total, nil
-//}
 
 func (r *ReviewService) GetReviewList(pageInfo request.PageInfo) (list interface{}, total int64, err error) {
 	var reviewSignList []model.ReviewSign
@@ -246,7 +213,12 @@ func (r *ReviewService) GetReviewList(pageInfo request.PageInfo) (list interface
 		whereStr := ""
 		whereArgs := []interface{}{}
 		for key, val := range keyWord {
-			whereStr += fmt.Sprintf("%s = ? ", key)
+			fieldName := strcase.ToSnake(key)
+			// 将数字类型的值转换为uint类型
+			if v, ok := val.(float64); ok {
+				val = uint(v)
+			}
+			whereStr += fmt.Sprintf("%s = ? ", fieldName)
 			whereArgs = append(whereArgs, val)
 			if len(whereArgs) != len(keyWord) {
 				whereStr += "AND "
@@ -331,6 +303,44 @@ func (r *ReviewService) GetEvaluateList(pageInfo request.PageInfo, userID uint) 
 		signList = append(signList, sign)
 	}
 	return signList, total, nil
+}
+
+func (r *ReviewService) GetSignWithEvaluateList(pageInfo request.PageInfo) (list interface{}, total int64, err error) {
+	var SignList []model.Sign
+	limit := pageInfo.PageSize
+	offset := pageInfo.Page
+
+	db := global.DB.Model(&model.Sign{})
+	if pageInfo.Keyword != nil {
+		keyWord := pageInfo.Keyword
+		whereStr := ""
+		whereArgs := []interface{}{}
+		for key, val := range keyWord {
+			fieldName := strcase.ToSnake(key) // 将小驼峰命名转换为下划线命名
+			// 将数字类型的值转换为uint类型
+			if v, ok := val.(float64); ok {
+				val = uint(v)
+			}
+			whereStr += fmt.Sprintf("%s = ? ", fieldName)
+			whereArgs = append(whereArgs, val)
+			if len(whereArgs) != len(keyWord) {
+				whereStr += "AND "
+			}
+		}
+		db = db.Where(whereStr, whereArgs...)
+	}
+
+	// 获取总数
+	if err = db.Count(&total).Error; err != nil {
+		return
+	}
+
+	// 获取Sign列表
+	if err = db.Limit(limit).Offset(offset).Preload("Evaluates.User").Find(&SignList).Error; err != nil {
+		return
+	}
+
+	return SignList, total, nil
 }
 
 func (r *ReviewService) CreateOrUpdateReport(report model.Report) error {

@@ -9,4 +9,6 @@ type Evaluate struct {
 	JieCiId        uint   `json:"jieCiId"`                                                                              // 届次
 	Score          uint   `json:"score" gorm:"score:分数"`
 	Comments       string `json:"comments" gorm:"comments:评价"`
+	Sign           Sign   `gorm:"foreignkey:SignId"`
+	User           User   `gorm:"foreignkey:EvaluateUserId"`
 }

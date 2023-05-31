@@ -38,6 +38,14 @@ func (r *ReviewApi) CreateReview(ctx *gin.Context) {
 			}
 			reviewSigns = append(reviewSigns, reviewSign)
 		}
+		sign := &model.Sign{MODEL: global.MODEL{ID: signId}, Status: 5}
+		if err = stageService.UpdateSign(*sign); err != nil {
+			global.LOG.Error("create review update sign status failed！")
+			response.FailWithMessage("create review update sign status failed！", ctx)
+			return
+		} else {
+			global.LOG.Info("create review  update sign status success")
+		}
 	}
 
 	err = reviewService.CreateOrUpdateReviews(reviewSigns, reviewR.SignId, reviewR.UserId)
@@ -55,13 +63,15 @@ func (r *ReviewApi) CreateEvaluate(ctx *gin.Context) {
 	var err error
 	_ = ctx.ShouldBindJSON(&evaluateR)
 
+	period, err := stageService.GetJieCi()
+
 	// 创建一个新的评估记录列表
 	var evaluates []*model.Evaluate
 	for _, signId := range evaluateR.SignId {
 		for _, userId := range evaluateR.UserId {
 			// 为每个评委和作品创建一个新的评估记录
 			evaluate := &model.Evaluate{
-				JieCiId:        evaluateR.JieCiId,
+				JieCiId:        period.Period,
 				EvaluateUserId: userId,
 				SignId:         signId,
 			}
@@ -126,6 +136,26 @@ func (r *ReviewApi) GetReviewList(ctx *gin.Context) {
 		}, "获取成功", ctx)
 	}
 
+}
+
+func (r *ReviewApi) GetSignEvaluateList(ctx *gin.Context) {
+	var pageInfo request.PageInfo
+	_ = ctx.ShouldBindJSON(&pageInfo)
+	if err := utils.Verify(pageInfo, utils.PageInfoVerify); err != nil {
+		response.FailWithMessage(err.Error(), ctx)
+		return
+	}
+	if list, total, err := reviewService.GetSignWithEvaluateList(pageInfo); err != nil {
+		global.LOG.Error("获取作品评分列表失败!", zap.Error(err))
+		response.FailWithMessage("获取作品评分列表失败", ctx)
+	} else {
+		response.OkWithDetailed(response.PageResult{
+			List:     list,
+			Total:    total,
+			Page:     pageInfo.Page,
+			PageSize: pageInfo.PageSize,
+		}, "获取作品评分列表成功", ctx)
+	}
 }
 
 func (r *ReviewApi) GetEvaluateList(ctx *gin.Context) {

@@ -36,7 +36,7 @@ func CheckStage() gin.HandlerFunc {
 			return
 		}
 
-		if stage >= 3 && (context.FullPath() == "/stage/upload" || context.FullPath() == "/stage/deleteFile") {
+		if stage >= 4 && (context.FullPath() == "/stage/upload" || context.FullPath() == "/stage/deleteFile") {
 			context.JSON(http.StatusForbidden, gin.H{
 				"code":    http.StatusForbidden,
 				"message": "You are not allowed to perform this action during the registration stage",

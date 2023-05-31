@@ -54,6 +54,10 @@ func (s *StageService) UpdateSign(signR model.Sign) error {
 	return global.DB.Updates(&signR).Error
 }
 
+func (s *StageService) UpdateSignZero(data map[string]interface{}) error {
+	return global.DB.Model(&model.Sign{}).Updates(&data).Error
+}
+
 func (s *StageService) UpdateSignCoverUrl(signID uint, coverUrl string) error {
 	return global.DB.Model(&model.Sign{}).Where("id = ?", signID).Update("cover_url", coverUrl).Error
 }
@@ -64,6 +68,12 @@ func (s *StageService) GetSign(signId int) (model.Sign, error) {
 	return sign, err
 }
 
+func (s *StageService) GetSignEvaluate(signId int, userId uint) (model.Evaluate, error) {
+	var evaluate model.Evaluate
+	err := global.DB.Where("sign_id=? And evaluate_user_id=?", signId, userId).First(&evaluate).Error
+	return evaluate, err
+}
+
 func (s *StageService) GetWorkFileType() ([]model.WorkFileType, error) {
 	var workFileTypes []model.WorkFileType
 	if err := global.DB.Find(&workFileTypes).Error; err != nil {
@@ -72,60 +82,19 @@ func (s *StageService) GetWorkFileType() ([]model.WorkFileType, error) {
 	return workFileTypes, nil
 }
 
-//func (s *StageService) GetSignList(pageInfo request.PageInfo) (list interface{}, total int64, err error) {
-//	var signList []model.SignWithPhone
-//	limit := pageInfo.PageSize
-//	offset := pageInfo.Page
-//	db := global.DB.Model(&model.Sign{})
-//	err = db.Count(&total).Error
-//	if err != nil {
-//		return
-//	}
-//	// 返回用户名
-//	// 关联查询
-//	if pageInfo.Keyword != nil {
-//		keyWord := pageInfo.Keyword
-//		whereStr := ""
-//		whereArgs := []interface{}{}
-//		for key, val := range keyWord {
-//			fieldName := strcase.ToSnake(key) // 将小驼峰命名转换为下划线命名
-//			// 将数字类型的值转换为uint类型
-//			if v, ok := val.(float64); ok {
-//				val = uint(v)
-//			}
-//			whereStr += fmt.Sprintf("%s = ? ", fieldName)
-//			whereArgs = append(whereArgs, val)
-//			if len(whereArgs) != len(keyWord) {
-//				whereStr += "AND "
-//			}
-//		}
-//		db = db.Where(whereStr, whereArgs...)
-//	}
-//	err = db.Select("signs.*, users.phone as phone").Joins("left join users on signs.user_id = users.id").Limit(limit).Offset(offset).Scan(&signList).Error
-//	if err != nil {
-//		return
-//	}
-//	for i := range signList {
-//		var files []model.File
-//		err = global.DB.Model(&model.File{}).Where("sign_id = ?", signList[i].ID).Find(&files).Error
-//		if err != nil {
-//			return
-//		}
-//		signList[i].Files = files
-//	}
-//	if err != nil {
-//		return
-//	}
-//	return signList, total, err
-//}
+func (s *StageService) GetMajor() ([]model.Major, error) {
+	var major []model.Major
+	if err := global.DB.Find(&major).Error; err != nil {
+		return nil, err
+	}
+	return major, nil
+}
 
 func (s *StageService) GetSignList(pageInfo request.PageInfo) (list interface{}, total int64, err error) {
 	var signList []model.SignWithPhone
 	limit := pageInfo.PageSize
 	offset := pageInfo.Page
 	db := global.DB.Model(&model.Sign{})
-
-	// 先判断是否需要关键词搜索
 	if pageInfo.Keyword != nil {
 		keyWord := pageInfo.Keyword
 		whereStr := ""
@@ -139,16 +108,38 @@ func (s *StageService) GetSignList(pageInfo request.PageInfo) (list interface{},
 			switch fieldName {
 			case "username":
 				fieldName = "signs." + fieldName
+				whereStr += fmt.Sprintf("%s = ? AND ", fieldName)
+				whereArgs = append(whereArgs, val)
+			case "major_id":
+				// 从 grades 表中查找 major_id 的所有 userId
+				var gradeUsers []model.Grade
+				err = global.DB.Model(&model.Grade{}).Where("major_id = ?", val).Find(&gradeUsers).Error
+				if err != nil {
+					return
+				}
+				userIds := make([]uint, len(gradeUsers))
+				for i, gradeUser := range gradeUsers {
+					userIds[i] = gradeUser.UserId
+				}
+				// 在 signs 表中查找所有 userId 对应的 signs
+				whereStr += fmt.Sprintf("user_id IN (?) AND ")
+				whereArgs = append(whereArgs, userIds)
 			default:
-				fieldName = "signs." + fieldName // 如果所有的字段都在 signs 表中，你也可以删除这个 switch 结构，直接添加前缀。
-			}
-			whereStr += fmt.Sprintf("%s = ? ", fieldName)
-			whereArgs = append(whereArgs, val)
-			if len(whereArgs) != len(keyWord) {
-				whereStr += "AND "
+				fieldName = "signs." + fieldName
+				if fieldName == "signs.status" {
+					// 检查字段名是否为 status
+					whereStr += fmt.Sprintf("%s IN (?) AND ", fieldName)
+					whereArgs = append(whereArgs, val)
+				} else {
+					whereStr += fmt.Sprintf("%s = ? AND ", fieldName)
+					whereArgs = append(whereArgs, val)
+				}
 			}
 		}
-		db = db.Where(whereStr, whereArgs...)
+		if len(whereArgs) > 0 {
+			whereStr = whereStr[:len(whereStr)-4] // remove the last 'AND '
+		}
+		db = db.Debug().Where(whereStr, whereArgs...)
 	}
 
 	// 计数操作
@@ -189,6 +180,7 @@ func (s *StageService) GetJieCi() (model.CompetitionTime, error) {
 func (s *StageService) Upload(file model.File) (model.File, error) {
 	return file, global.DB.Create(&file).Error
 }
+
 func (s *StageService) DeleteFile(fileId uint) error {
 	keyWords := map[string]interface{}{
 		"id": fileId,
